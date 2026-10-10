@@ -1,0 +1,14 @@
+# Local hosting identity and deployment packages
+.openai/
+.sites-checkout/
+.sites-checkout-*/
+.sites-runtime/
+nexus-deploy.tar.gz
+
+# Dependencies and machine-local files
+node_modules/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.log
