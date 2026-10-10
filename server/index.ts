@@ -2,12 +2,14 @@ import express from "express";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createApi } from "./api";
+import { createWebinarApi } from "./webinars";
 import { z } from "zod";
 const production = process.argv.includes("--production");
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "256kb" }));
 app.use("/api/website-builder", createApi());
+app.use("/api/webinars", createWebinarApi());
 if (!production) {
   const { createServer } = await import("vite");
   const vite = await createServer({
@@ -36,6 +38,7 @@ if (!production) {
   );
 }
 app.use(express.static(resolve("dist")));
+app.get("/events/:slug", (_req, res) => res.sendFile(resolve("dist/event.html")));
 app.use(
   (
     error: unknown,
