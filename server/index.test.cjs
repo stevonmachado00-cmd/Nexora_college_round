@@ -20,14 +20,16 @@ test('single Nexus account buys and manages subscriptions directly',async()=>{
   const networkFetch=global.fetch;
   const providerCalls=[];
   let lastSubscriptionNotes={};
+  let createdSubscriptions=0;
+  const subscriptionNotes=new Map();
   global.fetch=(url,options={})=>{
     if(!String(url).startsWith('https://api.razorpay.com/'))return networkFetch(url,options);
     providerCalls.push({url:String(url),method:options.method,body:options.body?JSON.parse(options.body):null});
     let result;
     if(String(url).endsWith('/plans/plan_teststarter'))result={id:'plan_teststarter',period:'monthly',interval:1,item:{currency:'INR',amount:199900}};
     else if(String(url).endsWith('/plans/plan_testgrowth'))result={id:'plan_testgrowth',period:'monthly',interval:1,item:{currency:'INR',amount:599900}};
-    else if(options.method==='GET')result={id:'sub_rzp_new',status:'created',short_url:'https://rzp.io/rzp/test',notes:lastSubscriptionNotes};
-    else {if(String(url).endsWith('/subscriptions'))lastSubscriptionNotes=JSON.parse(options.body).notes;result={id:'sub_rzp_new',status:'created',short_url:'https://rzp.io/rzp/test'};}
+    else if(options.method==='GET'){const providerId=String(url).split('/').at(-1);result={id:providerId,status:'created',short_url:'https://rzp.io/rzp/test',notes:subscriptionNotes.get(providerId)||lastSubscriptionNotes};}
+    else {if(String(url).endsWith('/subscriptions')){lastSubscriptionNotes=JSON.parse(options.body).notes;createdSubscriptions++;subscriptionNotes.set(createdSubscriptions===1?'sub_rzp_new':`sub_rzp_new${createdSubscriptions}`,lastSubscriptionNotes);}result={id:createdSubscriptions===1?'sub_rzp_new':`sub_rzp_new${createdSubscriptions}`,status:'created',short_url:'https://rzp.io/rzp/test'};}
     return Promise.resolve(new Response(JSON.stringify(result),{status:200,headers:{'content-type':'application/json'}}));
   };
   try{
@@ -66,6 +68,19 @@ test('single Nexus account buys and manages subscriptions directly',async()=>{
     assert.equal(invoices.status,200);assert.equal(invoices.data.invoices.find(x=>x.provider_invoice_id==='inv_test').status,'paid');
     const audit=await call('/audit','GET',null,nexus.cookie);assert.equal(audit.status,200);
     assert.ok(audit.data.audit.some(x=>x.action==='billing.cancellation_submitted'));
+    const cancelled={event:'subscription.cancelled',payload:{subscription:{entity:{id:'sub_rzp_new',status:'cancelled'}}}};
+    assert.equal((await webhook(cancelled,'evt_cancelled')).status,200);
+    const publicPlans=await call('/public/plans');
+    assert.equal(publicPlans.status,200);
+    assert.deepEqual(publicPlans.data.plans.map(plan=>plan.id),['starter','growth']);
+    const pending=await call('/public/subscriptions/checkout','POST',{plan_id:'starter'});
+    assert.equal(pending.status,201);
+    const replacement=await call('/public/subscriptions/checkout','POST',{plan_id:'growth'});
+    assert.equal(replacement.status,201);
+    assert.notEqual(replacement.data.subscription_id,pending.data.subscription_id);
+    assert.equal(db.prepare('SELECT status FROM subscriptions WHERE id=?').get(pending.data.subscription_id).status,'canceled');
+    assert.equal(db.prepare('SELECT plan_id FROM subscriptions WHERE id=?').get(replacement.data.subscription_id).plan_id,'growth');
+    assert.ok(providerCalls.some(x=>x.url.endsWith('/subscriptions/sub_rzp_new2/cancel')&&x.body?.cancel_at_cycle_end===false));
   }finally{
     global.fetch=networkFetch;
     await new Promise(resolve=>server.close(resolve));db.close();fs.rmSync(temp,{recursive:true,force:true});
