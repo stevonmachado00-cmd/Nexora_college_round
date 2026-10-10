@@ -19,7 +19,7 @@ The homepage progresses from a connected workspace mockup to an interactive cust
 
 The visual anchor is a composed browser mockup, not decoration. Product previews show meaningful relationships between customer, event, campaign, and subscription views. Quiet surfaces give the examples room to breathe. The dashboard shares the public website's type, color, and icon language.
 
-Interaction stays within frontend scope: navigation, filters, tabs, project preview dialogs, FAQs, and an interactive journey storyboard. No authentication, persistence, LLM calls, payment, publishing, or email delivery is added.
+Interaction stays within frontend scope: navigation, filters, tabs, project preview dialogs, FAQs, an interactive journey storyboard, and a composable website-builder preview. The builder uses optional starter kits, a curated section library, global design tokens, structured page-blueprint review, and AI change proposals that must be explicitly applied to the local preview. No authentication, persistence, LLM calls, payment, publishing, or email delivery is added.
 
 ## Design guidance consulted
 
