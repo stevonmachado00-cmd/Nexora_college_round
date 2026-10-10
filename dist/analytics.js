@@ -68,3 +68,4 @@ function analytics() {
     `</div>` +
     `<div class="analytics-footer">Sample workspace · All analytics are illustrative and use no live tracking, payments, campaign delivery, or AI execution.</div>`;
 }
+
