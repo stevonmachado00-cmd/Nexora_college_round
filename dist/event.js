@@ -19,7 +19,9 @@
           const response = await fetch(`/api/webinars/${encodeURIComponent(webinar.id)}/registrations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: form.elements.name.value, email: form.elements.email.value, company: form.elements.company.value, consent: form.elements.consent.checked, source: "website", utmSource: params.get("utm_source") || "", utmCampaign: params.get("utm_campaign") || "" }) });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || "Registration failed.");
-          document.getElementById("form-wrap").innerHTML = `<div class="success"><strong>You’re registered.</strong><br>${result.duplicate ? "This email was already registered for the event." : "We’ve saved your place. Check back for event updates."}</div>`;
+          const joinLink = result.meetingUrl ? `<p><a class="btn primary" href="${esc(result.meetingUrl)}" target="_blank" rel="noopener noreferrer">Join Google Meet ↗</a></p>` : "";
+          const calendarMessage = result.calendarInviteSent ? "A Google Calendar invitation has been sent." : result.calendarInviteWarning ? esc(result.calendarInviteWarning) : "We’ve saved your place. Check back for event updates.";
+          document.getElementById("form-wrap").innerHTML = `<div class="success"><strong>You’re registered.</strong><br>${result.duplicate ? "This email was already registered for the event." : ""} ${calendarMessage}${joinLink}</div>`;
         } catch (error) { notice.textContent = error.message; notice.classList.add("error"); button.disabled = false; }
       });
     } catch (error) {

@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import { Router } from "express";
 import { z } from "zod";
 import { transaction } from "./storage";
+import { googleCalendarProvider, type WebinarCalendarProvider } from "./google-calendar";
 
 const text = z.string().trim().min(1).max(3000);
 const WebinarInput = z.object({
@@ -29,6 +30,7 @@ const AttendanceRows = z.array(z.object({
   email: z.string().trim().email().max(254),
   minutesAttended: z.number().int().min(0).max(720),
 })).min(1).max(10000);
+const FollowUpInput = z.object({ subject: z.string().trim().min(1).max(200), body: z.string().trim().min(1).max(5000) });
 
 type Webinar = z.infer<typeof WebinarInput> & {
   id: string;
@@ -36,6 +38,7 @@ type Webinar = z.infer<typeof WebinarInput> & {
   status: "draft" | "published" | "completed" | "cancelled";
   createdAt: string;
   updatedAt: string;
+  calendarEventId: string | null;
 };
 type Registration = {
   id: string;
@@ -53,13 +56,14 @@ type Registration = {
   registeredAt: string;
 };
 type Contact = { id: string; email: string; name: string; company: string; lifecycle: "lead"; createdAt: string; updatedAt: string };
-type FollowUp = { id: string; webinarId: string; segment: "attended" | "no_show"; audienceCount: number; status: "draft"; createdAt: string };
+type FollowUp = { id: string; webinarId: string; segment: "attended" | "no_show"; audienceCount: number; subject: string; body: string; status: "draft"; createdAt: string };
 type Data = { webinars: Webinar[]; contacts: Contact[]; registrations: Registration[]; followUps: FollowUp[] };
 
 const WebinarSchema = WebinarInput.extend({
   id: z.uuid(), slug: z.string().min(1),
   status: z.enum(["draft", "published", "completed", "cancelled"]),
   createdAt: z.string().datetime(), updatedAt: z.string().datetime(),
+  calendarEventId: z.string().nullable().default(null),
 });
 const DataSchema = z.object({
   webinars: z.array(WebinarSchema),
@@ -70,7 +74,11 @@ const DataSchema = z.object({
     consent: z.literal(true), source: z.string(), utmSource: z.string(), utmCampaign: z.string(),
     minutesAttended: z.number().int(), registeredAt: z.string().datetime(),
   })),
-  followUps: z.array(z.object({ id: z.uuid(), webinarId: z.uuid(), segment: z.enum(["attended", "no_show"]), audienceCount: z.number().int(), status: z.literal("draft"), createdAt: z.string().datetime() })),
+  followUps: z.array(z.object({
+    id: z.uuid(), webinarId: z.uuid(), segment: z.enum(["attended", "no_show"]), audienceCount: z.number().int(),
+    subject: z.string().max(200).default("Webinar follow-up"), body: z.string().max(5000).default("Follow up with this webinar audience."),
+    status: z.literal("draft"), createdAt: z.string().datetime(),
+  })),
 });
 
 export class JsonWebinarRepository {
@@ -97,7 +105,7 @@ const withCounts = (data: Data, webinar: Webinar) => {
   return { ...webinar, registrationCount: registrations.length, attendedCount: registrations.filter((row) => row.status === "attended" || row.status === "partial").length };
 };
 
-export function createWebinarApi(repository = new JsonWebinarRepository()) {
+export function createWebinarApi(repository = new JsonWebinarRepository(), calendar: WebinarCalendarProvider = googleCalendarProvider) {
   const api = Router();
   const registrationRate = new Map<string, { count: number; until: number }>();
   api.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
@@ -115,7 +123,7 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
         let slug = base, suffix = 2;
         while (data.webinars.some((item) => item.slug === slug)) slug = `${base}-${suffix++}`;
         const now = new Date().toISOString();
-        const webinar: Webinar = { ...input, id: randomUUID(), slug, status: "draft", createdAt: now, updatedAt: now };
+        const webinar: Webinar = { ...input, id: randomUUID(), slug, status: "draft", createdAt: now, updatedAt: now, calendarEventId: null };
         data.webinars.push(webinar); await repository.write(data); return withCounts(data, webinar);
       });
       res.status(201).json(result);
@@ -124,6 +132,26 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
   api.get("/contacts", async (_req, res, next) => {
     try { res.json((await repository.read()).contacts); }
     catch (error) { next(error); }
+  });
+  api.delete("/:id", async (req, res, next) => {
+    try {
+      const initial = await repository.read();
+      const webinar = initial.webinars.find((item) => item.id === req.params.id);
+      if (!webinar) { res.status(404).json({ error: "Webinar not found." }); return; }
+      let calendarDeleteWarning: string | undefined;
+      if (webinar.calendarEventId) {
+        if (await calendar.isConnected()) await calendar.deleteMeeting(webinar.calendarEventId);
+        else calendarDeleteWarning = "The webinar was deleted, but its Google Calendar event could not be removed because the organizer account is disconnected.";
+      }
+      await transaction(async () => {
+        const data = await repository.read();
+        data.webinars = data.webinars.filter((item) => item.id !== req.params.id);
+        data.registrations = data.registrations.filter((item) => item.webinarId !== req.params.id);
+        data.followUps = data.followUps.filter((item) => item.webinarId !== req.params.id);
+        await repository.write(data);
+      });
+      res.json({ deleted: true, calendarDeleteWarning });
+    } catch (error) { next(error); }
   });
   api.get("/:id", async (req, res, next) => {
     try {
@@ -149,10 +177,17 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
   });
   api.post("/:id/publish", async (req, res, next) => {
     try {
+      const initial = await repository.read();
+      const draft = initial.webinars.find((row) => row.id === req.params.id);
+      if (!draft) throw new Error("Webinar not found.");
+      if (draft.status !== "draft") throw new Error("Only draft webinars can be published.");
+      let meeting: { calendarEventId: string; meetingUrl: string } | null = null;
+      if (await calendar.isConnected()) meeting = await calendar.createMeeting(draft);
       const result = await transaction(async () => {
         const data = await repository.read(), item = data.webinars.find((row) => row.id === req.params.id);
         if (!item) throw new Error("Webinar not found.");
         if (item.status !== "draft") throw new Error("Only draft webinars can be published.");
+        if (meeting) { item.calendarEventId = meeting.calendarEventId; item.meetingUrl = meeting.meetingUrl; }
         item.status = "published"; item.updatedAt = new Date().toISOString(); await repository.write(data); return withCounts(data, item);
       });
       res.json(result);
@@ -162,7 +197,7 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
     try {
       const data = await repository.read(), item = data.webinars.find((row) => row.slug === req.params.slug && row.status === "published");
       if (!item) { res.status(404).json({ error: "This event is not available." }); return; }
-      const { meetingUrl: _meetingUrl, ...publicEvent } = withCounts(data, item);
+      const { meetingUrl: _meetingUrl, calendarEventId: _calendarEventId, ...publicEvent } = withCounts(data, item);
       res.json(publicEvent);
     } catch (error) { next(error); }
   });
@@ -179,7 +214,7 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
         if (!webinar) throw new Error("This webinar is not accepting registrations.");
         const email = input.email.toLowerCase();
         const existing = data.registrations.find((row) => row.webinarId === webinar.id && row.email === email);
-        if (existing) return { registration: existing, duplicate: true };
+        if (existing) return { registration: existing, duplicate: true, calendarEventId: webinar.calendarEventId, meetingUrl: webinar.meetingUrl };
         const count = data.registrations.filter((row) => row.webinarId === webinar.id).length;
         if (webinar.capacity !== null && count >= webinar.capacity) throw new Error("This webinar has reached capacity.");
         // CRM contacts are canonical within this prototype store and can be reused across events.
@@ -193,9 +228,14 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
         }
         const contactId = contact.id;
         const registration: Registration = { id: randomUUID(), webinarId: webinar.id, contactId, name: input.name, email, company: input.company, status: "registered", consent: true, source: input.source, utmSource: input.utmSource, utmCampaign: input.utmCampaign, minutesAttended: 0, registeredAt: new Date().toISOString() };
-        data.registrations.push(registration); await repository.write(data); return { registration, duplicate: false };
+        data.registrations.push(registration); await repository.write(data); return { registration, duplicate: false, calendarEventId: webinar.calendarEventId, meetingUrl: webinar.meetingUrl };
       });
-      res.status(result.duplicate ? 200 : 201).json(result);
+      let calendarInviteSent = false, calendarInviteWarning: string | undefined;
+      if (result.calendarEventId) {
+        try { await calendar.inviteAttendee(result.calendarEventId, result.registration.email); calendarInviteSent = true; }
+        catch { calendarInviteWarning = "Your registration is saved, but the Calendar invitation could not be sent. Contact the event organizer."; }
+      }
+      res.status(result.duplicate ? 200 : 201).json({ registration: result.registration, duplicate: result.duplicate, meetingUrl: result.meetingUrl || undefined, calendarInviteSent, calendarInviteWarning });
     } catch (error) { next(error); }
   });
   api.get("/:id/registrations", async (req, res, next) => {
@@ -227,10 +267,34 @@ export function createWebinarApi(repository = new JsonWebinarRepository()) {
         const data = await repository.read(), webinar = data.webinars.find((row) => row.id === req.params.id);
         if (!webinar) throw new Error("Webinar not found.");
         const audienceCount = data.registrations.filter((row) => row.webinarId === webinar.id && (segment === "attended" ? row.status === "attended" || row.status === "partial" : row.status === "no_show") && row.consent).length;
-        const followUp: FollowUp = { id: randomUUID(), webinarId: webinar.id, segment, audienceCount, status: "draft", createdAt: new Date().toISOString() };
+        const followUp: FollowUp = {
+          id: randomUUID(), webinarId: webinar.id, segment, audienceCount,
+          subject: segment === "attended" ? `Thanks for joining: ${webinar.title}` : `We missed you at ${webinar.title}`,
+          body: segment === "attended"
+            ? `Hi {{first_name}},\n\nThank you for joining ${webinar.title}. We hope you found the session useful.\n\nYou can reply to this email if you have questions.\n\n— ${webinar.host}`
+            : `Hi {{first_name}},\n\nWe missed you at ${webinar.title}. We hope everything is okay. Reply to this email if you would like information about a future session.\n\n— ${webinar.host}`,
+          status: "draft", createdAt: new Date().toISOString(),
+        };
         data.followUps.push(followUp); await repository.write(data); return followUp;
       });
       res.status(201).json(result);
+    } catch (error) { next(error); }
+  });
+  api.put("/:id/follow-ups/:followUpId", async (req, res, next) => {
+    try {
+      const input = FollowUpInput.parse(req.body);
+      const result = await transaction(async () => {
+        const data = await repository.read();
+        const webinar = data.webinars.find((item) => item.id === req.params.id);
+        if (!webinar) throw new Error("Webinar not found.");
+        const followUp = data.followUps.find((item) => item.id === req.params.followUpId && item.webinarId === webinar.id);
+        if (!followUp) throw new Error("Follow-up draft not found.");
+        followUp.subject = input.subject;
+        followUp.body = input.body;
+        await repository.write(data);
+        return followUp;
+      });
+      res.json(result);
     } catch (error) { next(error); }
   });
   return api;
