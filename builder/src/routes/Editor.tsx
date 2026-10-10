@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Puck, createUsePuck, type PuckApi, type Data } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { config } from "../puck/config";
+import { descriptions } from "../../shared/catalog";
+import type { ComponentName } from "../../shared/schema";
 import { templates } from "../../shared/templates";
 import {
   validateDocument,
@@ -152,7 +154,28 @@ function Toolbar() {
     </header>
   );
 }
-const overrides = { header: Toolbar };
+function DrawerItem({ children, name }: { children: ReactNode; name: string }) {
+  const key = Object.keys(descriptions).find((item) => item.toLowerCase() === name.replace(/\s+/g, "").toLowerCase()) as ComponentName | undefined;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const description = key ? descriptions[key] : "A reusable section for your website";
+  return (
+    <div className="nb-library-card">
+      <div className={`nb-library-thumb thumb-${slug}`} aria-hidden="true">
+        <div className="nb-thumb-nav"><i /><span /><span /></div>
+        <div className="nb-thumb-body">
+          <div className="nb-thumb-copy"><i /><i /><i /><b /></div>
+          <div className="nb-thumb-art"><i /><i /><i /></div>
+        </div>
+        <div className="nb-thumb-cards"><i /><i /><i /></div>
+      </div>
+      <div className="nb-library-entry">
+        <div className="nb-library-name">{children}</div>
+        <small>{description}</small>
+      </div>
+    </div>
+  );
+}
+const overrides = { header: Toolbar, drawerItem: DrawerItem };
 function Editor({
   project: initial,
   health,

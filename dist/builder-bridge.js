@@ -29,6 +29,21 @@ function redirectBuilder() {
 }
 window.addEventListener("hashchange", redirectBuilder);
 redirectBuilder();
+const nexusStarterTemplates = [
+  ["saas-modern", "Modern SaaS", "SaaS", "A focused product story"],
+  ["fintech-premium", "Premium Fintech", "Fintech", "Trust and clarity"],
+  ["agency-clean", "Independent Agency", "Agency", "Editorial portfolio"],
+  ["restaurant-cafe", "Restaurant & Cafe", "Restaurant", "Menus and reservations"],
+  ["beauty-wellness", "Beauty & Wellness", "Wellness", "Services and bookings"],
+  ["commerce-editorial", "Editorial Commerce", "Retail", "Product-led retail"],
+  ["coach-course", "Coach & Courses", "Education", "Program and inquiry"],
+  ["event-summit", "Event & Summit", "Events", "Agenda and sign-up"],
+  ["hospitality-stays", "Stays & Retreats", "Hospitality", "Rooms and table requests"],
+  ["community-hub", "Community Hub", "Community", "Resources and gatherings"],
+];
+function starterLibrary() {
+  return `<section class="card" style="padding:23px;margin-bottom:22px"><div class="card-head"><div><h2>Editable starter templates</h2><p style="margin-top:8px">Choose a foundation, then edit every component, image, copy, theme token, and business binding in the visual builder.</p></div><a class="btn" href="/builder">View all templates →</a></div><div class="sites-grid" style="margin-top:18px">${nexusStarterTemplates.map(([id,name,category,description],index)=>`<article class="card" style="padding:0;overflow:hidden"><div class="site-cover ${index%3===1?'alt':index%3===2?'orange':''}"><div class="mini-site"><div class="mini-nav"><strong>${esc(name.split(" ")[0].toLowerCase())}.</strong><span>About &nbsp; Contact</span></div><h3>${esc(name)}</h3><p>${esc(description)}</p></div></div><div style="padding:16px"><span class="pill purple">${esc(category)}</span><h3 style="margin:12px 0 7px">${esc(name)}</h3><a class="btn" style="display:inline-flex;margin-top:8px" href="/builder?template=${encodeURIComponent(id)}">Customize →</a></div></article>`).join("")}</div></section>`;
+}
 function websites() {
   queueMicrotask(async () => {
     const container = document.getElementById("nexus-saved-websites");
@@ -57,7 +72,7 @@ function websites() {
       "Real drafts, controlled components, and published snapshots.",
       '<a class="btn primary" href="/builder">＋ Create website</a>',
     ) +
-    `<div class="card" style="padding:23px;margin-bottom:22px"><h2>Build a website around your business.</h2><p style="margin-top:8px">Choose a designed foundation. Edit visually in Puck. Review assisted changes before applying them.</p><a class="link" style="display:inline-block;margin-top:12px" href="/builder">Explore the website builder →</a></div><div id="nexus-saved-websites" class="sites-grid"><p>Loading your projects…</p></div>`
+    `<div class="card" style="padding:23px;margin-bottom:22px"><h2>Build a website around your business.</h2><p style="margin-top:8px">Choose a designed foundation. Edit visually in Puck. Review assisted changes before applying them.</p><a class="link" style="display:inline-block;margin-top:12px" href="/builder">Explore the website builder →</a></div>${starterLibrary()}<div id="nexus-saved-websites" class="sites-grid"><p>Loading your projects…</p></div>`
   );
 }
 if (page === "website") renderContent();

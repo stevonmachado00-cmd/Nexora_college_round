@@ -29,6 +29,11 @@ export const descriptions: Record<ComponentName, string> = {
   DashboardMetrics: "At-a-glance metrics for software, operations, and internal tools",
   CareerOpenings: "Open roles with team, location, work type, and apply link",
   StayCards: "Hospitality and travel listings with location and rate details",
+  LeadForm: "A polished inquiry form for services, agencies, and sales teams",
+  NewsletterSignup: "A compact email signup for newsletters and announcements",
+  AppointmentBooking: "A service and time request form for salons and wellness studios",
+  TableReservation: "A table request form for restaurants and cafes",
+  ServiceMenu: "A browsable treatment and service menu with duration and price",
 };
 // Shared schemas are the source of props, variants and provider metadata.
 function compact(value: unknown): unknown {

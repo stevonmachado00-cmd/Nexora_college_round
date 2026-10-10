@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { templates, getTemplate, emptyWebsite } from "../../shared/templates";
 import type { WebsiteDocument } from "../../shared/schema";
 import { generateWebsite, projectStorage, request } from "../lib/api";
 import { Logo, Status, message, slugify, type Health } from "../components/UI";
+import { imageSource } from "../components/website/assets/catalog";
 export default function Hub({ health }: { health: Health }) {
   const [prompt, setPrompt] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
+    [category, setCategory] = useState("All templates"),
     [projects, setProjects] = useState<
       {
         id: string;
@@ -56,6 +58,13 @@ export default function Hub({ health }: { health: Health }) {
       setBusy(false);
     }
   }
+  const categories = useMemo(
+    () => ["All templates", ...Array.from(new Set(templates.map((t) => t.category)))],
+    [],
+  );
+  const visibleTemplates = category === "All templates"
+    ? templates
+    : templates.filter((template) => template.category === category);
   return (
     <div className="nb-hub">
       <header className="nb-hub-nav">
@@ -107,20 +116,23 @@ export default function Hub({ health }: { health: Health }) {
         <div className="nb-section-title">
           <div>
             <h2>Designed foundations</h2>
-            <p>Three polished starting points. One shared component library.</p>
+            <p>Choose a direction, then edit every section, image, interaction, and theme token in the visual composer.</p>
           </div>
-          <button
-            className="nb-button"
-            disabled={busy}
-            onClick={() => create("blank")}
-          >
-            ＋ Start blank
-          </button>
+          <div className="nb-template-controls">
+            <label>
+              <span>Industry</span>
+              <select value={category} onChange={(event) => setCategory(event.target.value)}>
+                {categories.map((item) => <option key={item}>{item}</option>)}
+              </select>
+            </label>
+            <button className="nb-button" disabled={busy} onClick={() => create("blank")}>＋ Start blank</button>
+          </div>
         </div>
         <div className="nb-template-grid">
-          {templates.map((t) => (
+          {visibleTemplates.map((t) => (
             <article key={t.id} className="nb-template-card">
               <div className={`nb-template-art art-${t.id}`}>
+                <img src={imageSource(t.heroImage)} alt="" aria-hidden="true" />
                 <div className="nb-art-nav">
                   <b>{t.brand.toLowerCase()}.</b>
                   <span>About &nbsp; Contact</span>

@@ -11,10 +11,11 @@ import { descriptions } from "../../shared/catalog";
 import * as sections from "../components/website/Sections";
 import * as contentBlocks from "../components/website/blocks/ContentBlocks";
 import * as industryBlocks from "../components/website/blocks/IndustryBlocks";
+import * as formBlocks from "../components/website/blocks/FormBlocks";
 import { Theme } from "../components/website/Theme";
 import { schemaFields } from "./fields";
 export type SectionProps = { [K in ComponentName]: ComponentProps<K> };
-const renderers = { ...sections, ...contentBlocks, ...industryBlocks } as unknown as Record<
+const renderers = { ...sections, ...contentBlocks, ...industryBlocks, ...formBlocks } as unknown as Record<
   ComponentName,
   ComponentType<Record<string, unknown>>
 >;
@@ -38,23 +39,16 @@ const registry = Object.fromEntries(
 export const config: Config = {
   components: registry,
   categories: {
-    structure: { title: "Structure", components: ["Navbar", "Hero", "Footer"] },
-    story: {
-      title: "Your story",
-      components: ["Features", "HowItWorks", "CTA"],
-    },
-    proof: {
-      title: "Proof & conversion",
-      components: ["LogoCloud", "Stats", "Testimonials", "Pricing", "FAQ"],
-    },
-    content: { title: "Content", components: ["TextBlock", "ImageBlock", "Gallery", "Team"] },
-    business: { title: "Business & hospitality", components: ["Menu", "Contact"] },
-    commerce: { title: "Commercial & retail", components: ["ProductGrid", "StayCards"] },
-    media: { title: "Media & editorial", components: ["ArticleFeed", "VideoFeature"] },
-    learning: { title: "Education & reference", components: ["CourseCatalog", "ResourceLibrary"] },
-    community: { title: "Community & events", components: ["CommunityFeed", "EventSchedule"] },
-    work: { title: "Corporate & careers", components: ["CareerOpenings", "ProfileCard"] },
-    tools: { title: "Software & internal tools", components: ["DashboardMetrics"] },
+    structure: { title: "Structure", components: ["Navbar", "Footer"] },
+    hero: { title: "Hero & calls to action", components: ["Hero", "CTA"] },
+    story: { title: "Story & trust", components: ["TextBlock", "Features", "HowItWorks", "LogoCloud", "Stats", "Testimonials", "FAQ"] },
+    media: { title: "Images & editorial", components: ["ImageBlock", "Gallery", "Team", "VideoFeature", "ArticleFeed", "ResourceLibrary", "ProfileCard"] },
+    forms: { title: "Forms & signups", components: ["LeadForm", "NewsletterSignup"] },
+    restaurants: { title: "Restaurant & cafe", components: ["Menu", "TableReservation"] },
+    beauty: { title: "Beauty & wellness", components: ["ServiceMenu", "AppointmentBooking"] },
+    commerce: { title: "Retail & hospitality", components: ["ProductGrid", "StayCards"] },
+    learning: { title: "Education & community", components: ["CourseCatalog", "EventSchedule", "CommunityFeed"] },
+    business: { title: "Business & SaaS", components: ["Pricing", "Contact", "CareerOpenings", "DashboardMetrics"] },
   },
   root: {
     fields: {

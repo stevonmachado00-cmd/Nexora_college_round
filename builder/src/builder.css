@@ -9,6 +9,54 @@
   background: #f8f9fb;
   font-synthesis: none;
 }
+
+/* Visual thumbnails for the reusable Puck component library. */
+.nb-library-card { display: grid; gap: 7px; width: 100%; padding: 7px; border: 1px solid #e5e9f0; border-radius: 10px; background: #fff; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.nb-library-card:hover { border-color: #aab8ef; box-shadow: 0 5px 14px #17255412; transform: translateY(-1px); }
+.nb-library-thumb { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 78px; padding: 8px; overflow: hidden; border-radius: 6px; background: linear-gradient(145deg, #f1f4ff, #e7f4f0); }
+.nb-thumb-nav { display: flex; align-items: center; gap: 4px; height: 7px; }
+.nb-thumb-nav i { width: 12px; height: 6px; border-radius: 3px; background: #3156d3; }
+.nb-thumb-nav span { width: 17px; height: 3px; border-radius: 3px; background: #aeb8ca; }
+.nb-thumb-nav span:first-of-type { margin-left: auto; }
+.nb-thumb-body { display: grid; grid-template-columns: 1fr .75fr; gap: 8px; align-items: center; }
+.nb-thumb-copy { display: grid; gap: 4px; }
+.nb-thumb-copy i { display: block; width: 74%; height: 3px; border-radius: 2px; background: #758198; }
+.nb-thumb-copy i:first-child { width: 95%; height: 6px; background: #172554; }
+.nb-thumb-copy i:nth-child(3) { width: 55%; }
+.nb-thumb-copy b { width: 26px; height: 7px; margin-top: 2px; border-radius: 3px; background: #3156d3; }
+.nb-thumb-art { position: relative; display: block; height: 34px; border-radius: 5px; background: linear-gradient(135deg, #c8d2ff, #acd9c8); }
+.nb-thumb-art i { position: absolute; width: 14px; height: 14px; right: 8px; top: 6px; border-radius: 50%; background: #fff9; }
+.nb-thumb-art i:nth-child(2) { width: 23px; height: 17px; right: 20px; top: auto; bottom: 0; border-radius: 12px 12px 3px 3px; background: #3156d3; }
+.nb-thumb-art i:nth-child(3) { width: 18px; height: 12px; right: 5px; top: auto; bottom: 0; border-radius: 10px 10px 3px 3px; background: #3b9479; }
+.nb-thumb-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.nb-thumb-cards i { height: 13px; border: 1px solid #dfe4ec; border-radius: 3px; background: #fff; }
+.nb-library-entry { min-width: 0; }
+.nb-library-name { color: #172554; font-size: 12px; font-weight: 650; }
+.nb-library-name > * { width: 100%; }
+.nb-library-entry small { display: block; padding: 0 6px 3px; color: #718096; font-size: 10px; line-height: 1.35; }
+.thumb-navbar, .thumb-footer { background: linear-gradient(140deg, #f4f6fb, #e9eef8); }
+.thumb-navbar .nb-thumb-body, .thumb-footer .nb-thumb-body { display: none; }
+.thumb-navbar .nb-thumb-cards, .thumb-footer .nb-thumb-cards { margin-bottom: 3px; }
+.thumb-hero { height: 88px; background: linear-gradient(145deg, #eef0ff, #e8f6f1); }
+.thumb-hero .nb-thumb-cards { display: none; }
+.thumb-text-block .nb-thumb-body, .thumb-text-block .nb-thumb-copy { grid-template-columns: 1fr; }
+.thumb-text-block .nb-thumb-art, .thumb-text-block .nb-thumb-cards { display: none; }
+.thumb-lead-form .nb-thumb-art, .thumb-newsletter-signup .nb-thumb-art, .thumb-appointment-booking .nb-thumb-art, .thumb-table-reservation .nb-thumb-art { display: none; }
+.thumb-lead-form .nb-thumb-body, .thumb-newsletter-signup .nb-thumb-body, .thumb-appointment-booking .nb-thumb-body, .thumb-table-reservation .nb-thumb-body { grid-template-columns: 1fr; }
+.thumb-lead-form .nb-thumb-cards, .thumb-appointment-booking .nb-thumb-cards, .thumb-table-reservation .nb-thumb-cards { grid-template-columns: 1fr 1fr; }
+.thumb-newsletter-signup .nb-thumb-cards { grid-template-columns: 1fr auto; }
+.thumb-testimonials { background: linear-gradient(135deg, #f7f0e9, #f6f5ef); }
+.thumb-menu .nb-thumb-cards, .thumb-service-menu .nb-thumb-cards { grid-template-columns: 1fr; }
+.thumb-menu .nb-thumb-cards i, .thumb-service-menu .nb-thumb-cards i { height: 4px; border: 0; border-radius: 3px; background: #9b8465; }
+.thumb-gallery .nb-thumb-art, .thumb-image-block .nb-thumb-art, .thumb-product-grid .nb-thumb-art, .thumb-stay-cards .nb-thumb-art { background: linear-gradient(135deg, #dbbda2, #dfded2 55%, #98ac95); }
+.thumb-gallery .nb-thumb-cards i { height: 18px; background: linear-gradient(145deg, #d8c2ad, #a9b8aa); }
+.thumb-pricing .nb-thumb-cards i { height: 21px; border-color: #c8d2ff; }
+.thumb-pricing .nb-thumb-cards i:nth-child(2) { background: #e8edff; border-color: #8095ea; }
+.thumb-stats .nb-thumb-cards i { height: 17px; background: linear-gradient(180deg, #fff, #e5f2eb); }
+.thumb-video-feature .nb-thumb-art { width: 100%; height: 39px; background: linear-gradient(145deg, #17344a, #729b8e); }
+.thumb-video-feature .nb-thumb-cards { display: none; }
+.thumb-event-schedule .nb-thumb-cards, .thumb-career-openings .nb-thumb-cards, .thumb-article-feed .nb-thumb-cards, .thumb-resource-library .nb-thumb-cards { grid-template-columns: 1fr; }
+.thumb-event-schedule .nb-thumb-cards i, .thumb-career-openings .nb-thumb-cards i, .thumb-article-feed .nb-thumb-cards i, .thumb-resource-library .nb-thumb-cards i { height: 4px; border: 0; background: #9aa6b8; }
 * {
   box-sizing: border-box;
 }
@@ -233,11 +281,51 @@ textarea:focus-visible {
   background: #fff;
 }
 .nb-template-art {
+  position: relative;
   height: 215px;
   padding: 22px;
   background: #f0f4fb;
   border-bottom: 1px solid #e1e6ef;
   overflow: hidden;
+}
+.nb-template-art > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+}
+.nb-template-art > :not(img) {
+  position: relative;
+  z-index: 1;
+}
+.nb-template-controls {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+.nb-template-controls label {
+  display: grid;
+  gap: 5px;
+  color: #66758a;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nb-template-controls select {
+  min-width: 156px;
+  height: 34px;
+  border: 1px solid #d6deea;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e2a3a;
+  padding: 0 9px;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .nb-art-nav {
   display: flex;
@@ -857,6 +945,12 @@ textarea:focus-visible {
   }
   .nb-section-title {
     align-items: flex-start;
+    flex-direction: column;
+  }
+  .nb-template-controls {
+    align-items: end;
+    width: 100%;
+    justify-content: space-between;
   }
   .nb-hub main {
     padding: 30px 18px;

@@ -14,6 +14,9 @@ export function Theme({
     "--accent": t.accentColor,
     "--background": t.backgroundColor,
     "--text": t.textColor,
+    "--gradient-start": t.gradientStartColor,
+    "--gradient-end": t.gradientEndColor,
+    "--glow": t.glowColor,
     "--heading-font":
       t.headingFont === "Inter"
         ? "Inter, system-ui, sans-serif"
@@ -29,7 +32,7 @@ export function Theme({
     ],
   } as CSSProperties;
   return (
-    <div className={`nw buttons-${t.buttonStyle}`} style={tokens}>
+    <div className={`nw buttons-${t.buttonStyle} background-${t.backgroundEffect}`} style={tokens}>
       {children}
     </div>
   );

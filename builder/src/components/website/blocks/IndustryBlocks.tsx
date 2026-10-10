@@ -78,3 +78,9 @@ export function StayCards(p: ComponentProps<"StayCards">) {
     </a></article>)}
   </div></Block>;
 }
+
+export function ServiceMenu(p: ComponentProps<"ServiceMenu">) {
+  return <Block id={p.id} tone={p.tone} className={`nw-service-menu services-${p.variant}`}><div className="nw-industry-heading"><span className="nw-eyebrow">Care, considered</span><h2>{p.headline}</h2><p>{p.description}</p></div><div className="nw-service-grid">
+    {p.services.map((service, i) => <article key={i}><span className="nw-service-number">{String(i + 1).padStart(2, "0")}</span><div><h3>{service.name}</h3><p>{service.description}</p><small>{service.duration}</small></div><strong>{service.price}</strong></article>)}
+  </div><a className="nw-button" href={p.buttonUrl}>{p.buttonText}<span aria-hidden="true">↗</span></a></Block>;
+}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ComponentProps } from "../../../shared/schema";
+import { imageSource } from "./assets/catalog";
 function Section({
   id,
   tone,
@@ -94,7 +95,7 @@ export function Hero(p: ComponentProps<"Hero">) {
       {p.variant === "split-image" && (
         <div className="nw-hero-visual">
           {p.image ? (
-            <img src={p.image} alt={p.imageAlt} loading="lazy" />
+            <img src={imageSource(p.image)} alt={p.imageAlt} loading="lazy" />
           ) : (
             <ProductIllustration />
           )}

@@ -54,7 +54,9 @@ Use the Assistant button for a collapsible panel. Edits produce a change summary
 
 ## Components and registration
 
-Eleven registered components: Navbar, Hero, LogoCloud, Features, Stats, HowItWorks, Testimonials, Pricing, FAQ, CTA, Footer. Their typed renderers live in `builder/src/components/website/Sections.tsx`. Controlled variants include centered/split/left hero, simple/centered/CTA navbar, grid/alternating features, card/featured testimonials, and two/three pricing tiers.
+Thirty-three registered components are grouped in the Puck drawer by purpose and industry: site structure, hero and calls to action, story and trust, media and editorial, forms and signups, restaurant and cafe, beauty and wellness, retail and hospitality, education and community, and business and SaaS. The catalog includes visual, text, commerce, hospitality, editorial, team, careers, metrics, and resource blocks, plus inquiry, newsletter, appointment, and table-reservation forms. Restaurant & Cafe and Beauty & Wellness starter templates show these blocks in complete page flows.
+
+Typed renderers live in `builder/src/components/website/Sections.tsx` and `builder/src/components/website/blocks/`. The component drawer uses Puck's `drawerItem` override to display small local CSS previews and a short description beside each draggable block. Forms are visual previews only; they do not send or store submissions. Theme controls include solid, gradient, and soft Gaussian glow backgrounds, with editable gradient and glow colors.
 
 `builder/shared/schema.ts` defines each component's allowed props, variants, defaults, bounded lists, URL restrictions and theme. `builder/src/puck/config.tsx` maps those definitions to known React renderers. The field adapter generates text, multiline text, select, radio, object and list controls from the same schemas. Plain string lists use a small reusable multiline field. Image URL and alt text fields are provider-independent; empty images render a built-in product illustration. Uploads/media libraries can later replace the image field without changing the document contract.
 

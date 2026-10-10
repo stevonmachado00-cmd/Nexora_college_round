@@ -3,26 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Nexus · Workflow Security</title>
+  <title>Nexus · Billing Console</title>
   <link rel="stylesheet" href="console.css">
+  <link rel="stylesheet" href="billing.css">
 </head>
 <body>
-  <header><a href="/#workflows">◈ Nexus</a><span>Workflow Security</span><div id="identity"></div></header>
+  <header><a href="/#billing">◈ Nexus</a><span>Billing Console</span><div id="identity"></div></header>
   <main>
     <section id="login" class="login card">
-      <div class="eyebrow">WORKFLOW SECURITY</div>
+      <div class="eyebrow">BILLING CONSOLE</div>
       <h1>Sign in to continue</h1>
-      <p>Gemini workflow drafts and the saved audit trail are protected by the Nexus demo account.</p>
+      <p>Billing configuration and activity are protected by the local operator account.</p>
       <form id="login-form">
-        <label>Email<input id="email" name="email" type="email" required value="nexus@nexus.demo"></label>
+        <label>Email<input id="email" name="email" type="email" required autocomplete="username"></label>
         <label>Password<input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Local demo password"></label>
-        <button class="primary">Sign in to Workflow Security</button>
+        <button class="primary">Sign in to Billing Console</button>
       </form>
     </section>
     <div id="workspace" hidden>
       <div class="heading">
-        <div><div class="eyebrow">PROTECTED WORKSPACE</div><h1>Workflow Security</h1><p>Create Gemini drafts and review saved workflow activity.</p></div>
-        <span class="environment">LOCAL / GEMINI DRAFT MODE</span>
+        <div><div class="eyebrow">PROTECTED WORKSPACE</div><h1>Billing Console</h1><p>Review connected plans, subscriptions, and provider activity.</p></div>
+        <span class="environment">LOCAL / BILLING MODE</span>
       </div>
       <div id="content"></div>
     </div>

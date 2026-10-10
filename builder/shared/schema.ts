@@ -24,6 +24,7 @@ export const ImageUrl = z
     if (!value) return true;
     if (/[\u0000-\u0020\\]/.test(value)) return false;
     if (value.startsWith("/") && !value.startsWith("//")) return true;
+    if (/^asset:[a-z0-9-]+$/i.test(value)) return true;
     try {
       return ["https:", "http:"].includes(new URL(value).protocol);
     } catch {
@@ -40,6 +41,10 @@ export const ThemeSchema = z
     accentColor: color.default("#3b9479"),
     backgroundColor: color.default("#ffffff"),
     textColor: color.default("#172554"),
+    backgroundEffect: z.enum(["solid", "gradient", "soft-glow"]).default("solid"),
+    gradientStartColor: color.default("#f5f7ff"),
+    gradientEndColor: color.default("#e8f6f2"),
+    glowColor: color.default("#b9c8ff"),
     headingFont: z.enum(["Inter", "Georgia", "Arial"]).default("Inter"),
     bodyFont: z.enum(["Inter", "Arial", "Georgia"]).default("Inter"),
     borderRadius: z.enum(["sharp", "soft", "rounded"]).default("soft"),
@@ -361,6 +366,56 @@ export const componentSchemas = {
     ...common, ...heading,
     stays: z.array(z.object({ name: text.default("Stay name"), location: text.default("Destination"), description: text.default("A welcoming place to stay."), price: text.default("From $120 / night"), image: ImageUrl.default(""), url: SafeUrl.default("#contact") }).strict()).max(8).default([{ name: "Garden House", location: "Countryside", description: "A quiet retreat surrounded by nature.", price: "From $120 / night", image: "", url: "#contact" }, { name: "Harbor Rooms", location: "Coastal district", description: "A relaxed base near the water.", price: "From $160 / night", image: "", url: "#contact" }]),
   }).strict(),
+  LeadForm: z.object({
+    ...common,
+    headline: text.default("Let’s talk about what you need"),
+    description: text.default("Share a few details and our team will be in touch."),
+    buttonText: text.default("Send inquiry"),
+    privacyNote: text.default("Your details are only used to respond to this request."),
+    variant: z.enum(["card", "split", "minimal"]).default("card"),
+  }).strict(),
+  NewsletterSignup: z.object({
+    ...common,
+    headline: text.default("A thoughtful note, occasionally"),
+    description: text.default("Get useful updates and new ideas in your inbox."),
+    buttonText: text.default("Subscribe"),
+    privacyNote: text.default("Unsubscribe anytime."),
+    variant: z.enum(["inline", "card", "banner"]).default("inline"),
+  }).strict(),
+  AppointmentBooking: z.object({
+    ...common,
+    headline: text.default("Find a time that works for you"),
+    description: text.default("Choose a service and request an appointment."),
+    services: z.array(text).max(8).default(["Consultation", "Signature service", "Follow-up"]),
+    buttonText: text.default("Request appointment"),
+    note: text.default("We’ll confirm your appointment by email or phone."),
+    variant: z.enum(["booking-card", "booking-split"]).default("booking-card"),
+  }).strict(),
+  TableReservation: z.object({
+    ...common,
+    headline: text.default("Reserve a table"),
+    description: text.default("Tell us when you would like to join us."),
+    buttonText: text.default("Request a table"),
+    note: text.default("Your reservation is confirmed by the restaurant."),
+    variant: z.enum(["reservation-card", "reservation-banner"]).default("reservation-card"),
+  }).strict(),
+  ServiceMenu: z.object({
+    ...common,
+    ...heading,
+    services: z.array(z.object({
+      name: text.default("Signature service"),
+      description: text.default("A short description of the experience."),
+      duration: text.default("60 min"),
+      price: text.default("From $75"),
+    }).strict()).max(10).default([
+      { name: "Signature facial", description: "A restorative treatment tailored to your skin.", duration: "60 min", price: "From $95" },
+      { name: "Glow treatment", description: "A brightening ritual with a gentle finish.", duration: "45 min", price: "From $75" },
+      { name: "Consultation", description: "A personal plan for your next visit.", duration: "30 min", price: "Complimentary" },
+    ]),
+    buttonText: text.default("Book a service"),
+    buttonUrl: SafeUrl.default("#booking"),
+    variant: z.enum(["service-cards", "service-list"]).default("service-cards"),
+  }).strict(),
 };
 export type ComponentName = keyof typeof componentSchemas;
 export type ComponentProps<K extends ComponentName> = z.infer<
@@ -414,7 +469,11 @@ export const PuckDataSchema = z
 export const WebsiteDocumentSchema = z
   .object({
     template: z
-      .enum(["saas-modern", "fintech-premium", "agency-clean"])
+      .enum([
+        "saas-modern", "fintech-premium", "agency-clean", "restaurant-cafe",
+        "beauty-wellness", "commerce-editorial", "coach-course", "event-summit",
+        "hospitality-stays", "community-hub",
+      ])
       .nullable(),
     data: PuckDataSchema,
   })
