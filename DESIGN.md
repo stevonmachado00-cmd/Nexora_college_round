@@ -1,6 +1,6 @@
 # Nexus design direction
 
-This phase is a frontend blueprint. No business services, real customers, endorsements, or integrations are implied by sample content.
+The main business dashboard remains a frontend blueprint. The Puck website builder now supports real local project editing, persistence, preview and published snapshots. No real customers, endorsements, or business-module integrations are implied by sample content.
 
 ## Visual system
 
@@ -19,7 +19,7 @@ The homepage progresses from a connected workspace mockup to an interactive cust
 
 The visual anchor is a composed browser mockup, not decoration. Product previews show meaningful relationships between customer, event, campaign, and subscription views. Quiet surfaces give the examples room to breathe. The dashboard shares the public website's type, color, and icon language.
 
-Interaction stays within frontend scope: navigation, filters, tabs, project preview dialogs, FAQs, and an interactive journey storyboard. No authentication, persistence, LLM calls, payment, publishing, or email delivery is added.
+The business dashboard interactions remain illustrative. The website builder uses Puck with a controlled section library, global design tokens, three starter templates, saved drafts, clean previews and explicit publication of local snapshots. Assisted changes are reviewed before application and are undoable. A rules composer runs by default; real AI uses a configurable server provider. Authentication and live payment, CRM and email connections remain future work. See `docs/WEBSITE_BUILDER.md` for implementation details.
 
 ## Design guidance consulted
 
