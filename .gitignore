@@ -16,3 +16,4 @@ dist/builder/
 test-results/
 playwright-report/
 .nexus-data/
+data/
