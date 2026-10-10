@@ -7,7 +7,9 @@
     "dev": "tsx --env-file-if-exists=.env server/index.ts",
     "build": "tsc --noEmit && vite build",
     "start": "tsx --env-file-if-exists=.env server/index.ts --production",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "billing:dev": "node server/index.cjs",
+    "billing:test": "node --test server/*.test.cjs"
   },
   "dependencies": {
     "@puckeditor/core": "0.23.0",
