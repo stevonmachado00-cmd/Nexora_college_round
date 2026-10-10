@@ -6,4 +6,8 @@ Run locally with `python -m http.server 4173 --directory dist`, then visit http:
 
 Includes Overview, Websites, Templates, Website Builder, CRM (contacts, leads, customers, pipeline), Campaigns, AI Agent, Workflows, Analytics, Webinars, Billing (subscriptions, plans, usage), and Settings.
 
+The default homepage tells the Nexus story through an interactive customer journey, four example project showcases, product mockups, an AI planning storyboard, and FAQs. Open `/#projects` for the project workspace, or `/#overview` for the business dashboard. Project filters, search, grid/list views, details, and journey tabs are temporary UI interactions.
+
+The commercial visual system and design sources are documented in `DESIGN.md`. Showcase brands and customer projects are fictional concepts, not endorsements or verified customer results.
+
 All business data and approvals are illustrative. No backend, AI, payment, email, scraping, authentication, or business-data persistence is implemented. Interactions change temporary UI state only. Website preview data uses predefined sections and a structured schema. Fonts load from Google Fonts with system fallbacks.
