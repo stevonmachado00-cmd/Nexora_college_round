@@ -12,7 +12,7 @@ export function Preview({ id }: { id: string }) {
       .get(id)
       .then((p) => {
         setProject(p);
-        document.title = `${p.name} · Preview`;
+        document.title = `${p.name}. Preview`;
       })
       .catch((e) => setError(message(e)));
   }, [id]);

@@ -13,7 +13,7 @@ export type Health = { provider: string; demo: boolean };
 export function Logo() {
   return (
     <a className="nb-logo" href="/#website">
-      <span>N</span>Nexus <em>/ Websites</em>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h10M5 7v10M19 7v10M7 19h10M7 7l10 10"/></svg></span>Nexus <em>/ Websites</em>
     </a>
   );
 }
@@ -36,17 +36,20 @@ export function Status({
 
 export function Loading() {
   return (
-    <div className="nb-loading" role="status">
-      Loading your website…
+    <div className="ds-loading nb-loading" role="status" aria-live="polite">
+      <span className="ds-skeleton" /><span className="ds-skeleton" /><span className="ds-skeleton" />
+      <p>Loading your website…</p>
     </div>
   );
+}
+export function Empty({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="ds-empty"><div className="ds-empty-art" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 4h14v12H3z M3 8h14 M6 6h1 M9 6h1" /></svg></div><h2>{title}</h2>{children}</section>;
 }
 export function ErrorPage({ text }: { text: string }) {
   return (
     <div className="nb-error-page">
       <Logo />
-      <h1>We couldn’t open this website.</h1>
-      <Status text={text} error />
+      <Empty title="We couldn’t open this website."><p>{text}</p></Empty>
       <a className="nb-button" href="/builder">
         Return to website projects
       </a>

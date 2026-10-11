@@ -13,11 +13,11 @@ window.addEventListener('message', event => {
 });
 const $ = selector => document.querySelector(selector);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const table = (heads, rows) => rows.length ? `<div class="table-wrap"><table class="table"><thead><tr>${heads.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '<div class="empty">No saved workflow events yet.</div>';
+const table = (heads, rows) => rows.length ? `<div class="table-wrap"><table class="table"><thead><tr>${heads.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : NexusUI.empty({title:"No activity yet",description:"Saved billing activity will appear here.",kind:"billing",compact:true});
 
 async function api(path, method='GET', payload) {
   const response = await fetch('/api' + path, {method, credentials:'same-origin', headers:payload ? {'Content-Type':'application/json'} : {}, body:payload ? JSON.stringify(payload) : undefined});
-  const data = await response.json();
+  const data = await response.json().catch(() => { throw new Error("Billing service is unavailable. Open the billing service on port 4175."); });
   if (!response.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
@@ -38,10 +38,10 @@ function render() {
   const planRows = plans.map(plan => `<tr><td><strong>${escapeHtml(plan.name)}</strong></td><td>${money(plan.amount_paise)} / month</td><td>${escapeHtml(plan.razorpay_plan_id)}</td></tr>`).join('');
   const subscriptionRows = subscriptions.map(subscription => `<tr><td>${escapeHtml(subscription.customer_email || '—')}</td><td>${escapeHtml(subscription.plan_name || subscription.plan_id)}</td><td>${escapeHtml(subscription.status)}</td><td>${escapeHtml(subscription.provider_subscription_id)}</td></tr>`).join('');
   $('#content').innerHTML = `<div class="billing-console">
-    <section class="card billing-summary"><div><span class="eyebrow">BILLING STATUS</span><h2>${state.health.razorpayTestConfigured ? 'Razorpay Test Mode connected' : 'Payment provider not configured'}</h2><p>${state.health.razorpayTestConfigured ? 'Only provider-linked billing records are shown below.' : 'Add the Razorpay test credentials to the local server before creating or viewing live billing records.'}</p></div><span class="environment">LOCAL ONLY</span></section>
+    <section class="card billing-summary"><div><span class="eyebrow">Billing status</span><h2>${state.health.razorpayTestConfigured ? 'Razorpay Test Mode connected' : 'Payment provider not configured'}</h2><p>${state.health.razorpayTestConfigured ? 'Only provider-linked billing records are shown below.' : 'Add the Razorpay test credentials to the local server before creating or viewing live billing records.'}</p></div><span class="environment">Local only</span></section>
     <div class="billing-stats"><section class="card"><strong>${plans.length}</strong><span>Connected plans</span></section><section class="card"><strong>${subscriptions.length}</strong><span>Live subscriptions</span></section><section class="card"><strong>${invoices.length}</strong><span>Provider invoices</span></section></div>
-    <section class="card billing-table"><div class="panel-head"><div><h2>Connected plans</h2><p>Plans linked to Razorpay Test Mode.</p></div></div>${plans.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>PLAN</th><th>PRICE</th><th>PROVIDER ID</th></tr></thead><tbody>${planRows}</tbody></table></div>` : '<div class="empty">No provider-linked plans yet.</div>'}</section>
-    <section class="card billing-table"><div class="panel-head"><div><h2>Live subscriptions</h2><p>Only subscriptions with a payment-provider reference are included.</p></div></div>${subscriptions.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>CUSTOMER</th><th>PLAN</th><th>STATUS</th><th>PROVIDER ID</th></tr></thead><tbody>${subscriptionRows}</tbody></table></div>` : '<div class="empty">No live subscriptions yet.</div>'}</section>
+    <section class="card billing-table"><div class="panel-head"><div><h2>Connected plans</h2><p>Plans linked to Razorpay Test Mode.</p></div></div>${plans.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Plan</th><th>Price</th><th>Provider id</th></tr></thead><tbody>${planRows}</tbody></table></div>` : NexusUI.empty({title:"No connected plans",description:"Provider-linked plans will appear here when billing is configured.",kind:"billing",compact:true})}</section>
+    <section class="card billing-table"><div class="panel-head"><div><h2>Live subscriptions</h2><p>Only subscriptions with a payment-provider reference are included.</p></div></div>${subscriptions.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Provider id</th></tr></thead><tbody>${subscriptionRows}</tbody></table></div>` : NexusUI.empty({title:"Your subscriptions will appear here",description:"Subscriptions appear after a customer completes checkout.",kind:"billing",compact:true})}</section>
   </div>`;
 }
 
@@ -60,7 +60,7 @@ async function refresh() {
       $('#login').hidden = false;
       $('#workspace').hidden = true;
       $('#identity').innerHTML = '';
-    } else notice(error.message);
+    } else { notice(error.message); }
   }
 }
 

@@ -1,0 +1,112 @@
+/*
+ * Film theme alignment layer.
+ * Load after the existing page styles. Deliberately scoped so it cannot affect
+ * embedded builder output or the scroll-driven film chapter.
+ */
+
+:where(.marketing-page, .nx-home, .workspace-page, .ds-console, .ds-event) {
+  --nx-film-control-radius: var(--nx-radius-control);
+  --nx-film-panel-radius: var(--nx-radius-panel);
+}
+
+/* Keep the product UI quiet and let the film remain the expressive element. */
+.nx-home :where(.ds-home-section-head h2, .ds-home-invite h2, .ds-home-project-grid h3),
+.marketing-page :where(.nx-section-heading h2, .nx-final-cta h2, .nx-journey-copy h3),
+.workspace-page :where(.pagehead h1, .ds-welcome h2, .nx-workspace-welcome h1),
+.ds-console :where(.heading h1, .login h1),
+.ds-event :where(.copy h1) {
+  font-family: var(--nx-font-heading);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+.nx-home :where(.ds-home-copy, .ds-home-section, .ds-home-footer),
+.marketing-page :where(.nx-main-nav, .nx-button, .nx-text-button, .nx-feature-link),
+.workspace-page :where(.pagehead, .nav, .topbar, .btn, .tab),
+.ds-console,
+.ds-event {
+  font-family: var(--nx-font-body);
+}
+
+/* Product buttons share a single restrained shape; the film's pill CTA is excluded. */
+.nx-home :where(.btn, .ds-home-features button),
+.marketing-page :where(.nx-button, .nx-text-button),
+.workspace-page :where(.btn, .nb-button, .nav),
+.ds-console :where(button, .primary),
+.ds-event :where(button, .btn) {
+  border-radius: var(--nx-film-control-radius);
+}
+
+.nx-home :where(.btn.primary),
+.marketing-page .nx-button.primary,
+.workspace-page :where(.btn.primary, .nb-button.primary),
+.ds-console :where(.primary, button.primary),
+.ds-event :where(.btn.primary, button[type='submit']) {
+  background: var(--nx-ink);
+  border-color: var(--nx-ink);
+  color: var(--nx-paper);
+}
+
+.nx-home :where(.btn:not(.primary), .ds-home-features button),
+.marketing-page .nx-button.quiet,
+.workspace-page :where(.btn:not(.primary), .nb-button:not(.primary)),
+.ds-console :where(button:not(.primary)),
+.ds-event :where(button:not([type='submit'])) {
+  background: var(--nx-surface);
+  border-color: var(--nx-line);
+  color: var(--nx-ink);
+}
+
+/* Panels use the same calm geometry in public and workspace surfaces. */
+.nx-home :where(.ds-home-project-art, .ds-home-invite),
+.marketing-page :where(.nx-product-stage, .nx-journey-visual, .nx-final-cta),
+.workspace-page :where(.card, .ds-welcome, .ds-projects, .ds-template-tile, .integration-panel),
+.ds-console :where(.card, .panel),
+.ds-event .event {
+  border-radius: var(--nx-film-panel-radius);
+}
+
+.workspace-page :where(.input, .search kbd, .nav, .tab, .pill),
+.ds-console :where(input, select, textarea, button, .badge, .environment),
+.ds-event :where(input, button, .success) {
+  border-radius: var(--nx-film-control-radius);
+}
+
+/* A small, consistent response surface—motion is removed for those who request it. */
+@media (prefers-reduced-motion: no-preference) {
+  .nx-home :where(.btn, .ds-home-project-grid > a, .ds-home-features a, .ds-home-features button),
+  .marketing-page :where(.nx-button, .nx-text-button, .nx-project-card, .nx-feature-link),
+  .workspace-page :where(.btn, .nb-button, .card, .nav, .tab),
+  .ds-console :where(button, .card, .panel),
+  .ds-event :where(button, .event) {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease,
+      box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .nx-home :where(.ds-home-project-grid > a:hover, .ds-home-features a:hover),
+  .marketing-page :where(.nx-project-card:hover, .nx-feature-link:hover),
+  .workspace-page :where(.card:hover),
+  .ds-console :where(.card:hover, .panel:hover) {
+    border-color: color-mix(in srgb, var(--nx-brand) 34%, var(--nx-line));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-home :where(.btn, .ds-home-project-grid > a, .ds-home-features a, .ds-home-features button),
+  .marketing-page :where(.nx-button, .nx-text-button, .nx-project-card, .nx-feature-link),
+  .workspace-page :where(.btn, .nb-button, .card, .nav, .tab),
+  .ds-console :where(button, .card, .panel),
+  .ds-event :where(button, .event) {
+    transition: none;
+  }
+}
+
+/* Accessible focus retains the product's violet accent without styling the film controls. */
+.nx-home :where(.btn, .ds-home-project-grid > a, .ds-home-features a, .ds-home-features button):focus-visible,
+.marketing-page :where(.nx-button, .nx-text-button, .nx-feature-link):focus-visible,
+.workspace-page :where(.btn, .nb-button, .nav, .tab):focus-visible,
+.ds-console :where(button, input, select, textarea):focus-visible,
+.ds-event :where(button, input, select):focus-visible {
+  outline: 2px solid var(--nx-brand);
+  outline-offset: 3px;
+}

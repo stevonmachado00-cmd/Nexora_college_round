@@ -192,7 +192,7 @@ function StringList({
           }
         />
       </label>
-      <small>One entry per line · up to {max}</small>
+      <small>One entry per line. up to {max}</small>
     </div>
   );
 }

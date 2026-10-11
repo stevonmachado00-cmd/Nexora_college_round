@@ -4,27 +4,8 @@
   const originalRender = render;
   const api = "/api/integrations";
   const themeStorageKey = "nexus-theme";
-  const billingStyles = document.createElement("link");
-  billingStyles.rel = "stylesheet";
-  billingStyles.href = "billing.css";
-  document.head.append(billingStyles);
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-  const state = (label, online) => `<span class="integration-state ${online ? "online" : "offline"}">${online ? "● Online" : "○ Needs attention"} · ${label}</span>`;
-  const emptyModules = {
-    overview: ["Your workspace", "Start with the tools you need. Real business information will appear here once you add it."],
-    website: ["Websites", "No website projects have been added yet."],
-    builder: ["Website builder", "No website projects have been added yet."],
-    workflows: ["Workflows", "No workflows have been configured yet."],
-    analytics: ["Analytics", "Connect your sources to view business performance here."],
-    settings: ["Workspace settings", "Workspace settings will appear here when you are ready to configure them."],
-    projects: ["Projects", "No projects have been added yet."]
-  };
-  const emptyWorkspace = ([title, description]) => head(title, description) + `
-    <section class="card empty clean-empty">
-      <span class="spark">○</span><h2>No data yet</h2>
-      <p>Add your real business data when you are ready. Nothing shown here is a sample record.</p>
-    </section>`;
-
+  const state = (label, online) => `<span class="integration-state ${online ? "online" : "offline"}" title="${label}">${online ? "Connected" : "Needs attention"}</span>`;
   function activeTheme() {
     try { return localStorage.getItem(themeStorageKey); } catch { return null; }
   }
@@ -35,7 +16,7 @@
     const button = document.querySelector("[data-action='theme-toggle']");
     if (button) {
       const dark = theme === "dark";
-      button.innerHTML = `<span aria-hidden="true">${dark ? "☀" : "☾"}</span><span class="theme-toggle-label">${dark ? "Light" : "Dark"}</span>`;
+      button.innerHTML = `${NexusUI.icon(dark ? "sun" : "moon")}<span class="theme-toggle-label">${dark ? "Light" : "Dark"}</span>`;
       button.setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} mode`);
       button.setAttribute("aria-pressed", String(dark));
     }
@@ -56,22 +37,30 @@
     addThemeToggle();
   };
 
-  const crmWorkspace = () => head("CRM, connected", "Your Frappe CRM runs locally and remains the source of truth for contacts and pipelines.", btn("Refresh status", "crm-refresh")) + `
-    <section class="card integration-panel" id="crm-workbench">
-      <div class="card-head" style="padding:0 0 15px"><div><h2>Frappe CRM</h2><p>Local Docker service · contacts, deals, and customer context.</p></div><span class="integration-state">Checking local CRM…</span></div>
-      <div class="integration-actions"><button class="btn primary" data-action="crm-open">Open Leads CRM ↗</button><span class="subtle">Create and manage leads, contacts, and deals.</span></div>
-    </section>`;
+  const crmPipeline = {
+    "New lead": [["Layers", "James Wilson", "Website", "$2,400"], ["Forma", "Daniel Brooks", "Campaign", "$1,800"]],
+    "Qualified": [["Acme Studio", "Olivia Lee", "Webinar", "$4,800"], ["Pulse", "Michael Reed", "Website", "$3,200"]],
+    "Proposal": [["Atlas Works", "Priya Shah", "Referral", "$6,400"]],
+    "Customer": [["Orbit", "Sophia Chen", "Campaign", "$149 / mo"], ["Mono", "Amelia Kim", "Webinar", "$149 / mo"]]
+  };
+  const crmWorkspace = () => {
+    const activeTab = tab || "All contacts";
+    const pipeline = Object.entries(crmPipeline).map(([stage, deals]) => `<div class="column"><h3>${stage} ${badge(String(deals.length), stage === "Customer" ? "green" : stage === "Proposal" ? "purple" : "")}</h3>${deals.map(([company, contact, source, value]) => `<article class="deal"><h3>${company}</h3><p>${contact}. ${source}</p><div class="deal-footer"><span>${value}</span>${badge(stage, stage === "Customer" ? "green" : "purple")}</div></article>`).join("")}</div>`).join("");
+    const metrics = `<div class="metrics"><div class="card metric"><div class="metric-top"><span>Open pipeline</span><span class="metric-icon">♧</span></div><div class="metric-value">$18.6k</div><div class="metric-foot"><span class="up"> 8 active deals</span><span>illustrative</span></div></div><div class="card metric"><div class="metric-top"><span>Qualified leads</span><span class="metric-icon">✧</span></div><div class="metric-value">42</div><div class="metric-foot"><span class="up"> 18.6%</span><span>this month</span></div></div><div class="card metric"><div class="metric-top"><span>Customers</span><span class="metric-icon">▦</span></div><div class="metric-value">892</div><div class="metric-foot"><span class="up"> 8.2%</span><span>this month</span></div></div></div>`;
+    const contactList = activeTab === "Customers" ? people.filter((person) => person[4] === "Customer") : activeTab === "Leads" ? people.filter((person) => person[4] !== "Customer") : people;
+    return head("Nexus demo CRM", "A ready-to-show workspace with contacts, deal stages, and customer context already in place.", badge("Demo workspace ready", "purple")) + tabs(["All contacts", "Leads", "Customers", "Pipeline"]) + (activeTab === "Pipeline" ? `<section class="board" aria-label="Demo sales pipeline">${pipeline}</section>` : `${metrics}<section class="card" style="margin-top:var(--nx-space-24)"><div class="card-head"><div><h2>${activeTab}</h2><p>Preloaded sample records for your presentation.</p></div>${badge(`${contactList.length} contacts`, "purple")}</div><div class="table-wrap"><table class="table"><thead><tr><th>Contact</th><th>Company</th><th>Status</th><th>Source</th></tr></thead><tbody>${contactList.map((person) => `<tr><td><div class="person"><span class="avatar">${person[0]}</span><div>${person[1]}<small>${person[2]}</small></div></div></td><td>${person[3]}</td><td>${badge(person[4], person[4] === "Customer" ? "green" : person[4] === "Qualified" ? "purple" : "")}</td><td>${person[5]}</td></tr>`).join("")}</tbody></table></div><p class="bottomnote" style="padding:var(--nx-space-16);margin:0">Demo data only. Every contact and activity is ready to present.</p></section>`);
+  };
   const campaignsWorkspace = () => head("Competitor ads, in focus", "Search public Meta Ad Library inventory, then review the campaign mix in a decision-ready format.", btn("Refresh status", "analyst-refresh")) + `
     <section class="card integration-panel" id="analyst-workbench">
-      <div class="card-head" style="padding:0 0 15px"><div><h2>Integrated analyst</h2><p>Public Meta Ad Library research · no Slack, Discord, or external notifications.</p></div><span class="integration-state">Checking AdRadar…</span></div>
+      <div class="card-head" style="padding:0 0 var(--nx-space-16)"><div><h2>Integrated analyst</h2><p>Save a snapshot of public ads to understand a competitor’s approach.</p></div><span class="integration-state">Checking AdRadar…</span></div>
       <div class="analyst-inputs"><label class="field">Facebook Page ID<input id="analyst-page-id" class="input" inputmode="numeric" placeholder="Enter a numeric Facebook Page ID"></label><label class="field">Country<select id="analyst-country" class="input"><option value="ALL">All countries</option><option value="IN">India</option><option value="US">United States</option></select></label><label class="field analyst-positioning">Your positioning <span>Optional — used only for grounded differentiation.</span><textarea id="analyst-positioning" class="input" rows="3" maxlength="1500" placeholder="What you offer, who it is for, or the angle you want to compare."></textarea></label></div>
-      <div class="integration-actions"><button class="btn primary" data-action="analyst-run">Scan 20 live ads →</button><button class="btn" data-action="analyst-load-saved">Open saved scan</button><span class="subtle">Stores a 20-ad public inventory locally · usually 5–15 seconds, depending on Meta</span></div>
+      <div class="integration-actions"><button class="btn primary" data-action="analyst-run">Scan 20 live ads </button><button class="btn" data-action="analyst-load-saved">Open saved scan</button><span class="subtle">Your scan is saved in this browser for later analysis.</span></div>
       <div class="analyst-progress" id="analyst-progress" aria-live="polite"></div>
     </section>`;
-  const agentWorkspace = () => head("A little direction. A lot of control.", "Your business agent prepares only supported Nexus actions and pauses before customer-facing work.") + `
+  const agentWorkspace = () => head("What’s your next move?", "Describe the outcome. Review a clear plan before taking action.") + `
     <section class="card integration-panel" id="agent-workbench">
-      <div class="card-head" style="padding:0 0 15px"><div><h2>Business agent</h2><p>Website · CRM · campaigns · webinars · analytics</p></div><span class="integration-state online">● Online · Approval-gated</span></div>
-      <textarea id="agent-request" class="input" rows="4" placeholder="Describe the work you would like the agent to prepare."></textarea>
+      <div class="card-head" style="padding:0 0 var(--nx-space-16)"><div><h2>Business agent</h2><p>Bring your website, audience, and campaigns into the same plan.</p></div><span class="integration-state">Ready to plan</span></div>
+      <label class="field" for="agent-request">Your goal</label><textarea id="agent-request" class="input" rows="4" placeholder="Describe the work you would like the agent to prepare."></textarea>
       <div class="integration-actions"><button class="btn primary" data-action="agent-run">Prepare plan</button><span class="subtle">Send and publish actions require your approval.</span></div>
     </section>`;
   const billingWorkspace = () => head("Billing", "Manage live plans, subscriptions, and billing activity without leaving Nexus.") + `
@@ -81,13 +70,15 @@
 
   renderContent = function () {
     const content = document.getElementById("content");
-    if (page === "analytics") { content.innerHTML = head("Integrated analytics", "Evidence-linked campaign intelligence alongside your connected business metrics.") + window.NexoraCompetitiveAnalysis.analyticsPanel(); return; }
+    if (page === "webinars") { window.nexusWebinarTab = tab || "Events"; content.innerHTML = head("Webinars", "Meaningful conversations, from invitation to follow-up.") + tabs(["Events", "Registrations"]) + `<div id="webinar-content" class="ds-webinar-body">${NexoraWebinars.render()}</div>`; void NexoraWebinars.refresh(); return; }
+    if (page === "analytics") { content.innerHTML = head("Analytics", "Understand the patterns. Keep the evidence in view.") + window.NexoraCompetitiveAnalysis.analyticsPanel(); return; }
     // Websites has a real builder bridge. It is intentionally not part of the
     // generic empty-state map even when the workspace has no saved projects.
     if (page === "website") { content.innerHTML = websites(); return; }
-    if (emptyModules[page]) { content.innerHTML = emptyWorkspace(emptyModules[page]); return; }
+    // Workflows remains the working module supplied by Nexora_dummy.
+    if (NexusPages[page] && page !== "workflows") { content.innerHTML = NexusPages[page](); return; }
     if (page === "billing") { content.innerHTML = billingWorkspace(); return; }
-    if (page === "crm") { content.innerHTML = crmWorkspace(); void refreshCrm(); return; }
+    if (page === "crm") { content.innerHTML = crmWorkspace(); return; }
     if (page === "campaigns") { content.innerHTML = campaignsWorkspace(); void refreshAnalyst(); return; }
     if (page === "agent") { content.innerHTML = agentWorkspace(); return; }
     originalRenderContent();
@@ -118,9 +109,10 @@
     if (target) target.innerHTML = `<h2>${title}</h2>${body}`;
   }
   async function runAgent(approvedActionIds = []) {
-    const request = document.getElementById("agent-request")?.value.trim();
+    const request = document.getElementById("agent-request")?.value.trim() || window.nexusLastRequest;
     if (!request) return;
-    setWorkbench("agent-workbench", "Business agent", "<p>Preparing an approval-gated plan…</p>");
+    window.nexusLastRequest = request;
+    setWorkbench("agent-workbench", "Business agent", NexusUI.loading("Preparing your plan"));
     try {
       const result = await fetch(`${api}/agent/plan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ request, approvedActionIds }) }).then(async (response) => {
         const data = await response.json();
@@ -128,15 +120,16 @@
         return data;
       });
       const pending = result.plan.filter((item) => item.needsApproval && !approvedActionIds.includes(item.id));
+      window.nexusPendingApprovals = pending.map(item => item.id);
       setWorkbench("agent-workbench", "Business agent", `<p>${escapeHtml(result.request)}</p><div class="agent-plan">${result.plan.map((item, index) => `<div class="planstep"><span class="stepnum">${index + 1}</span><div><h3>${escapeHtml(item.description)}</h3><p>${escapeHtml(item.name)}</p></div>${item.needsApproval ? '<span class="pill amber">Approval required</span>' : '<span class="pill green">Prepared</span>'}</div>`).join("")}</div>${pending.length ? '<div class="integration-actions"><button class="btn primary" data-action="agent-approve">Approve sensitive step</button><span class="subtle">Only the customer-facing send step requires approval.</span></div>' : `<p class="integration-result">${result.results.map((item) => escapeHtml(item.message)).join("\n")}</p>`}`);
-    } catch (error) { setWorkbench("agent-workbench", "Business agent", `<p>${escapeHtml(error.message)}</p>`); }
+    } catch (error) { setWorkbench("agent-workbench", "Business agent", NexusUI.empty({title:"The plan could not be prepared",description:escapeHtml(error.message),kind:"error",action:'<button class="btn" data-action="agent-run">Try again</button>'})); }
   }
   const safeMediaUrl = (value) => { try { const url = new URL(value); return /^https?:$/.test(url.protocol) ? url.href : ""; } catch { return ""; } };
-  const renderAd = (ad) => { const media = (ad.media || [])[0]; const mediaUrl = safeMediaUrl(media?.thumbnailUrl || media?.url || ""); const visual = mediaUrl ? `<img src="${escapeHtml(mediaUrl)}" alt="Creative preview for ${escapeHtml(ad.pageName)}" loading="lazy">` : `<div class="analyst-media-empty">Creative preview unavailable</div>`; return `<article class="analyst-ad"><div class="analyst-phone"><div class="analyst-phone-bar"><span>${escapeHtml(ad.pageName)}</span><small>Sponsored</small></div><p class="analyst-primary-text">${escapeHtml((ad.bodyText || ad.text || "No primary text captured.").replace(/\s+/g, " ").slice(0, 500))}</p><div class="analyst-media">${visual}</div><div class="analyst-ad-copy"><strong>${escapeHtml(ad.headline || "Headline not captured")}</strong><span>${escapeHtml(ad.cta || "CTA not captured")}</span></div></div><div class="analyst-card-meta"><span>${escapeHtml(ad.startedRunningOn || "Start date unavailable")}</span><a href="${escapeHtml(ad.adLibraryUrl)}" target="_blank" rel="noopener noreferrer">Meta source ↗</a></div></article>`; };
+  const renderAd = (ad) => { const media = (ad.media || [])[0]; const mediaUrl = safeMediaUrl(media?.thumbnailUrl || media?.url || ""); const visual = mediaUrl ? `<img src="${escapeHtml(mediaUrl)}" alt="Creative preview for ${escapeHtml(ad.pageName)}" loading="lazy">` : `<div class="analyst-media-empty">Creative preview unavailable</div>`; return `<article class="analyst-ad"><div class="analyst-phone"><div class="analyst-phone-bar"><span>${escapeHtml(ad.pageName)}</span><small>Sponsored</small></div><p class="analyst-primary-text">${escapeHtml((ad.bodyText || ad.text || "No primary text captured.").replace(/\s+/g, " ").slice(0, 500))}</p><div class="analyst-media">${visual}</div><div class="analyst-ad-copy"><strong>${escapeHtml(ad.headline || "Headline not captured")}</strong><span>${escapeHtml(ad.cta || "CTA not captured")}</span></div></div><div class="analyst-card-meta"><span>${escapeHtml(ad.startedRunningOn || "Start date unavailable")}</span><a href="${escapeHtml(ad.adLibraryUrl)}" target="_blank" rel="noopener noreferrer">Meta source </a></div></article>`; };
   function renderAnalystResult(result) {
     const categoryList = result.categories.map((item) => `<span class="analyst-category"><strong>${item.count}</strong>${escapeHtml(item.name)}</span>`).join("");
-    const reportAction = '<span class="pill green">Inventory cached</span><button class="btn" data-page="analytics">Generate analysis in Analytics →</button>';
-    return `<div class="analyst-results"><div class="analyst-result-head"><div><span class="analysis-kicker">Saved 20-ad campaign inventory</span><h2>${escapeHtml(result.totalCards)} active ad creatives, visually organized</h2><p>Page ID ${escapeHtml(result.pageId)} · ${escapeHtml(result.country)} · saved ${new Date(result.scannedAt).toLocaleString()} · ${escapeHtml(result.uniqueCreativeConcepts)} distinct copy concepts observed.</p></div><div class="row">${reportAction}</div></div><div class="analyst-category-list">${categoryList}</div><section class="analyst-section"><div><h3>20 stored creative previews</h3><p>Each card uses the publicly visible creative image when available. Headline and CTA are best-effort extractions from the public ad card.</p></div><div class="analyst-ad-grid">${result.ads.map((ad) => renderAd(ad)).join("")}</div></section><p class="analyst-disclaimer">Source: public Meta Ad Library via AdRadar. This bounded 20-ad snapshot is stored locally for review and analysis; it does not show spend, impressions, targeting, conversion rate, or profitability.</p></div>`;
+    const reportAction = '<span class="pill green">Inventory cached</span><button class="btn" data-page="analytics">Generate analysis in Analytics </button>';
+    return `<div class="analyst-results"><div class="analyst-result-head"><div><span class="analysis-kicker">Saved 20-ad campaign inventory</span><h2>${escapeHtml(result.totalCards)} active ad creatives, visually organized</h2><p>Page ID ${escapeHtml(result.pageId)}. ${escapeHtml(result.country)}. saved ${new Date(result.scannedAt).toLocaleString()}. ${escapeHtml(result.uniqueCreativeConcepts)} distinct copy concepts observed.</p></div><div class="row">${reportAction}</div></div><div class="analyst-category-list">${categoryList}</div><section class="analyst-section"><div><h3>20 stored creative previews</h3><p>Each card uses the publicly visible creative image when available. Headline and CTA are best-effort extractions from the public ad card.</p></div><div class="analyst-ad-grid">${result.ads.map((ad) => renderAd(ad)).join("")}</div></section><p class="analyst-disclaimer">Source: public Meta Ad Library via AdRadar. This bounded 20-ad snapshot is stored locally for review and analysis; it does not show spend, impressions, targeting, conversion rate, or profitability.</p></div>`;
   }
   function updateProgress(events) {
     const target = document.getElementById("analyst-progress");
@@ -152,7 +145,7 @@
   }
   function openSavedInventory() {
     const result = loadSavedInventory();
-    if (!result?.ads?.length) return toast("There is no saved 20-ad scan yet.", "warn");
+    if (!result?.ads?.length) { document.getElementById("analyst-progress").innerHTML = NexusUI.empty({title:"No saved scans yet",description:"Scan a Facebook Page above to save its public ads for later review.",kind:"campaigns",compact:true}); return; }
     const workbench = document.getElementById("analyst-workbench");
     if (workbench) workbench.innerHTML = renderAnalystResult(result);
     window.nexoraAnalystResult = result;
@@ -170,32 +163,19 @@
     source.onerror = () => { if (source.readyState !== EventSource.CLOSED) { source.close(); events.push({ stage: "Connection lost", detail: "The scan stream disconnected before AdRadar returned a result." }); updateProgress(events); } };
   }
   action = function (name) {
-    if (name === "theme-toggle") return setTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+    if (name === "theme-toggle") { setTheme(document.body.dataset.theme === "dark" ? "light" : "dark"); if (page === "settings") renderContent(); return; }
     if (name === "crm-refresh") return void refreshCrm();
     if (name === "crm-open") return window.open("http://127.0.0.1:8000/crm/lead", "_blank", "noopener");
     if (name === "analyst-refresh") return void refreshAnalyst();
     if (name === "analyst-run") return void runAnalyst();
     if (name === "analyst-load-saved") return void openSavedInventory();
     if (name === "analytics-generate-cached-report") return void window.NexoraCompetitiveAnalysis.generateCachedReport();
+    if (name === "billing-retry") { renderContent(); return; }
     if (name === "agent-run") return void runAgent();
-    if (name === "agent-approve") return void runAgent(["action_4", "action_5"]);
+    if (name === "agent-approve") return void runAgent(window.nexusPendingApprovals || []);
     return originalAction(name);
   };
-  document.addEventListener("click", (event) => {
-    if (!event.target.closest('[data-page="home"]')) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    page = "overview";
-    location.hash = "overview";
-    render();
-  }, true);
-  window.addEventListener("hashchange", () => {
-    if (location.hash !== "#home") return;
-    history.replaceState(null, "", `${location.pathname}${location.search}#overview`);
-    page = "overview";
-    render();
-  });
-  if (page === "integrations" || page === "home") {
+  if (page === "integrations") {
     history.replaceState(null, "", `${location.pathname}${location.search}#overview`);
     page = "overview";
   }

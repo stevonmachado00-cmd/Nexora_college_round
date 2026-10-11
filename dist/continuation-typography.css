@@ -1,0 +1,153 @@
+/*
+  Film-chapter typography
+  Markup contract:
+  .nx-film-chapter (add .nx-film-chapter--continuation or --title)
+    .nx-film-stage
+      video.nx-film-video
+      .nx-film-chapter-copy
+        .eyebrow
+        h2.heading
+        p.body
+
+  Add [data-revealed="true"] to the chapter when it enters view. The layout is
+  intentionally usable without that state, so copy remains visible if JS is off.
+*/
+.nx-film-chapter{
+  --chapter-ink:#f9f7f2;
+  --chapter-muted:rgba(249,247,242,.78);
+  --chapter-accent:#e2c9e7;
+  --chapter-line:rgba(249,247,242,.42);
+  position:relative;
+  isolation:isolate;
+  height:250vh;
+  min-height:100svh;
+  color:var(--chapter-ink);
+  background:#17131a;
+  overflow:clip;
+}
+
+.nx-film-chapter .nx-film-stage{position:sticky;top:0;min-height:100svh;overflow:hidden}
+.nx-film-chapter .nx-film-stage::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(10,8,11,.72) 0%,rgba(10,8,11,.38) 42%,rgba(10,8,11,.06) 75%),linear-gradient(0deg,rgba(10,8,11,.42),transparent 38%)}
+.nx-film-chapter .nx-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}
+.nx-film-chapter-copy{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:100svh;max-width:1440px;margin:0 auto;padding:clamp(7.5rem,15vh,12rem) clamp(1.5rem,6vw,6rem) clamp(4rem,10vh,8rem);pointer-events:none}
+.nx-film-chapter-copy>*{pointer-events:auto}
+
+.nx-film-chapter-copy>.eyebrow{
+  display:flex!important;align-items:center;gap:.75rem;margin:0 0 1.45rem;
+  color:var(--chapter-accent);font:600 clamp(.66rem,.75vw,.76rem)/1 var(--nx-font-body,Arial,sans-serif);
+  letter-spacing:.15em;text-transform:uppercase;
+}
+.nx-film-chapter-copy>.eyebrow::before{content:"";width:2.75rem;height:1px;background:currentColor;opacity:.8}
+.nx-film-chapter-copy>.heading{
+  max-width:min(13ch,760px);margin:0;color:var(--chapter-ink);
+  font:500 clamp(3rem,7.2vw,7.4rem)/.93 var(--nx-font-heading,Arial,sans-serif);
+  letter-spacing:-.075em;text-wrap:balance;
+  text-shadow:0 2px 22px rgba(0,0,0,.16);
+}
+.nx-film-chapter-copy>.body{max-width:38rem;margin:1.75rem 0 0;color:var(--chapter-muted);font:400 clamp(1rem,1.25vw,1.24rem)/1.58 var(--nx-font-body,Arial,sans-serif);letter-spacing:-.015em}
+.nx-film-chapter-copy>.nx-film-chapter__action{display:inline-flex;align-items:center;gap:.75rem;min-height:3rem;margin-top:2rem;padding:.78rem 1.15rem;border:1px solid rgba(255,255,255,.72);border-radius:999px;background:rgba(255,255,255,.05);color:var(--chapter-ink);font:600 .88rem/1 var(--nx-font-body,Arial,sans-serif);letter-spacing:-.01em;text-decoration:none;backdrop-filter:blur(9px);transition:background .25s ease,color .25s ease,transform .25s ease}
+.nx-film-chapter-copy>.nx-film-chapter__action:hover{background:var(--chapter-ink);color:#1c171e;transform:translateY(-2px)}
+.nx-film-chapter-copy>.nx-film-chapter__action:focus-visible{outline:3px solid var(--chapter-ink);outline-offset:4px}
+
+/* The continuation is paced like the other films and swaps copy at its midpoint. */
+.nx-film-chapter--continuation{height:300vh}
+.nx-film-chapter--continuation .nx-film-chapter-copy{display:grid;place-items:center;max-width:1320px;padding-block:0}
+.nx-film-chapter--continuation .nx-film-message{grid-area:1/1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;width:min(100% - 3rem,760px);transition:opacity .72s cubic-bezier(.2,.72,.22,1),filter .72s cubic-bezier(.2,.72,.22,1),transform .72s cubic-bezier(.2,.72,.22,1)}
+.nx-film-chapter--continuation .nx-film-message>.eyebrow{display:flex;align-items:center;gap:.75rem;margin:0 0 1.45rem;color:var(--chapter-accent);font:600 clamp(.66rem,.75vw,.76rem)/1 var(--nx-font-body,Arial,sans-serif);letter-spacing:.15em;text-transform:uppercase}
+.nx-film-chapter--continuation .nx-film-message>.eyebrow::before{content:"";width:2.75rem;height:1px;background:currentColor;opacity:.8}
+.nx-film-chapter--continuation .nx-film-message>.heading{max-width:12ch;margin:0;color:var(--chapter-ink);font:500 clamp(3rem,7.2vw,7.4rem)/.93 var(--nx-font-heading,Arial,sans-serif);letter-spacing:-.075em;text-wrap:balance;text-shadow:0 2px 22px rgba(0,0,0,.16)}
+.nx-film-chapter--continuation .nx-film-message>.body{max-width:38rem;margin:1.75rem 0 0;color:var(--chapter-muted);font:400 clamp(1rem,1.25vw,1.24rem)/1.58 var(--nx-font-body,Arial,sans-serif);letter-spacing:-.015em}
+.nx-film-chapter--continuation .nx-film-message--forward{opacity:0;filter:blur(15px);pointer-events:none;transform:translateY(1.5rem) scale(.985)}
+.nx-film-chapter--continuation[data-continuation-phase="forward"] .nx-film-message--creative{opacity:0;filter:blur(15px);pointer-events:none;transform:translateY(-1.5rem) scale(.985)}
+.nx-film-chapter--continuation[data-continuation-phase="forward"] .nx-film-message--forward{opacity:1;filter:blur(0);pointer-events:auto;transform:translateY(0) scale(1)}
+.nx-film-chapter--continuation .nx-film-message{animation:none!important}
+.nx-film-chapter--continuation .nx-film-stage::before{background:linear-gradient(90deg,rgba(12,9,14,.76) 0%,rgba(12,9,14,.42) 48%,rgba(12,9,14,.06) 76%),linear-gradient(0deg,rgba(12,9,14,.45),transparent 42%)}
+
+/* The third chapter is intentionally centred and a little more declarative. */
+.nx-film-chapter--title .nx-film-stage::before{background:radial-gradient(ellipse at 50% 50%,rgba(11,8,13,.05),rgba(11,8,13,.64) 100%),linear-gradient(0deg,rgba(11,8,13,.48),transparent 48%)}
+.nx-film-chapter--title .nx-film-chapter-copy{align-items:center;text-align:center;padding-inline:1.5rem}
+.nx-film-chapter--title .eyebrow{margin-bottom:1.75rem}
+.nx-film-chapter--title .heading{max-width:11ch;font-size:clamp(3.25rem,8.5vw,8.8rem)}
+.nx-film-chapter--title .body{max-width:31rem;margin-top:2rem}
+
+/* A restrained, one-time entrance. data-revealed is set by the host's observer. */
+@media (prefers-reduced-motion:no-preference){
+  .nx-film-chapter[data-revealed="true"] .eyebrow,
+  .nx-film-chapter[data-revealed="true"] .heading,
+  .nx-film-chapter[data-revealed="true"] .body,
+  .nx-film-chapter[data-revealed="true"] .nx-film-chapter__action{animation:film-copy-in .82s cubic-bezier(.2,.72,.22,1) both}
+  .nx-film-chapter[data-revealed="true"] .heading{animation-delay:.1s}
+  .nx-film-chapter[data-revealed="true"] .body{animation-delay:.2s}
+  .nx-film-chapter[data-revealed="true"] .nx-film-chapter__action{animation-delay:.3s}
+  .nx-film-chapter--title[data-revealed="true"] .heading{animation-name:film-title-in;animation-duration:1.05s}
+  .nx-film-chapter .nx-film-video{will-change:transform;transform:scale(var(--film-scale,1)) translateY(var(--film-translate,0%));transition:none}
+}
+@keyframes film-copy-in{from{opacity:0;transform:translate3d(0,1.25rem,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes film-title-in{from{opacity:0;letter-spacing:-.02em;transform:translate3d(0,1.6rem,0)}to{opacity:1;letter-spacing:-.075em;transform:translate3d(0,0,0)}}
+
+/* Modern browsers get an entrance linked directly to the chapter entering view. */
+@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
+  .nx-film-chapter-copy>.eyebrow,.nx-film-chapter-copy>.heading,.nx-film-chapter-copy>.body{animation:film-copy-in linear both;animation-timeline:view(block);animation-range:entry 4% cover 42%}
+  .nx-film-chapter-copy>.heading{animation-range:entry 9% cover 47%}
+  .nx-film-chapter-copy>.body{animation-range:entry 14% cover 52%}
+  .nx-film-chapter--title .nx-film-chapter-copy>.heading{animation-name:film-title-in;animation-range:entry 9% cover 54%}
+}}
+
+@media (max-width:760px){
+  .nx-film-chapter{height:220vh}
+  .nx-film-chapter-copy{justify-content:flex-end;padding:6rem 1.5rem 5rem}
+  .nx-film-chapter-copy>.heading{max-width:10ch;font-size:clamp(3rem,14vw,5rem);line-height:.96}
+  .nx-film-chapter-copy>.body{max-width:31rem;margin-top:1.35rem;font-size:1rem}
+  .nx-film-chapter--title .nx-film-chapter-copy{justify-content:flex-end;text-align:left;align-items:flex-start}
+  .nx-film-chapter--title .heading{max-width:9ch;font-size:clamp(3.25rem,15vw,5.5rem)}
+  .nx-film-chapter--title .nx-film-stage::before{background:linear-gradient(0deg,rgba(11,8,13,.78),rgba(11,8,13,.08) 72%),linear-gradient(90deg,rgba(11,8,13,.3),transparent)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .nx-film-chapter *, .nx-film-chapter *::before, .nx-film-chapter *::after{animation:none!important;transition:none!important}
+  .nx-film-chapter .nx-film-video{transform:none!important}
+}
+
+/* The final Nexus film carries the thesis, capabilities and call-to-action. */
+.nx-film-chapter--title{height:440vh}
+.nx-film-chapter--title .nx-film-chapter-copy{display:grid;place-items:center;padding-block:0}
+.nx-film-chapter--title .nx-film-message,.nx-film-chapter--title .nx-film-capabilities,.nx-film-chapter--title .nx-film-final-cta{grid-area:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:min(100% - 3rem,980px);text-align:center;transition:opacity .42s ease,filter .42s ease,transform .42s ease}
+.nx-film-chapter--title .nx-film-message>.eyebrow,.nx-film-chapter--title .nx-film-capabilities>.eyebrow,.nx-film-chapter--title .nx-film-final-cta>.eyebrow{display:flex;align-items:center;gap:.75rem;margin:0 0 1.75rem;color:var(--chapter-accent);font:600 clamp(.66rem,.75vw,.76rem)/1 var(--nx-font-body,Arial,sans-serif);letter-spacing:.15em;text-transform:uppercase}
+.nx-film-chapter--title .nx-film-message>.eyebrow::before,.nx-film-chapter--title .nx-film-capabilities>.eyebrow::before,.nx-film-chapter--title .nx-film-final-cta>.eyebrow::before{content:"";width:2.75rem;height:1px;background:currentColor;opacity:.8}
+.nx-film-chapter--title .nx-film-message>.heading,.nx-film-chapter--title .nx-film-final-cta>.heading{max-width:11ch;margin:0;color:var(--chapter-ink);font:500 clamp(3.25rem,8.5vw,8.8rem)/.93 var(--nx-font-heading,Arial,sans-serif);letter-spacing:-.075em;text-wrap:balance;text-shadow:0 2px 22px rgba(0,0,0,.16)}
+.nx-film-chapter--title .nx-film-message>.body,.nx-film-chapter--title .nx-film-final-cta>.body{max-width:31rem;margin:2rem 0 0;color:var(--chapter-muted);font:400 clamp(1rem,1.25vw,1.24rem)/1.58 var(--nx-font-body,Arial,sans-serif);letter-spacing:-.015em}
+.nx-film-chapter--title .nx-film-capabilities,.nx-film-chapter--title .nx-film-final-cta{visibility:hidden;opacity:0;filter:blur(10px);pointer-events:none;transform:translateY(1.2rem) scale(.99)}
+.nx-film-chapter--title[data-title-phase="capabilities"] .nx-film-message--thesis,.nx-film-chapter--title[data-title-phase="cta"] .nx-film-message--thesis{opacity:0;filter:blur(10px);pointer-events:none;transform:translateY(-1.2rem) scale(.99)}
+.nx-film-chapter--title[data-title-phase="capabilities"] .nx-film-capabilities{visibility:visible;opacity:1;filter:none;pointer-events:auto;transform:none}
+.nx-film-chapter--title[data-title-phase="cta"] .nx-film-capabilities{opacity:0;filter:blur(10px);pointer-events:none;transform:translateY(-1.2rem) scale(.99)}
+.nx-film-chapter--title[data-title-phase="cta"] .nx-film-final-cta{visibility:visible;opacity:1;filter:none;pointer-events:auto;transform:none}
+.nx-film-capabilities{color:var(--chapter-ink);text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.nx-film-capabilities ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.75rem,2vw,1.5rem);padding:0;margin:0;list-style:none;text-align:left}
+.nx-film-capabilities li{display:flex;gap:.85rem;align-items:flex-start;padding:1.1rem;border:1px solid rgba(255,255,255,.34);background:rgba(11,8,13,.48);color:var(--chapter-ink)}
+.nx-film-capabilities li>svg{flex:0 0 auto;margin-top:.15rem;color:var(--chapter-accent)}
+.nx-film-home .nx-film-capabilities h3{margin:0;color:var(--chapter-ink)!important;font:600 clamp(1rem,1.3vw,1.2rem)/1.15 var(--nx-font-body,Arial,sans-serif);letter-spacing:-.03em}
+.nx-film-capabilities p{margin:.48rem 0 0;color:var(--chapter-muted);font:400 clamp(.86rem,1vw,1rem)/1.45 var(--nx-font-body,Arial,sans-serif)}
+.nx-film-capability-link{display:inline-flex;align-items:center;gap:.4rem;margin:.85rem 0 0;padding:0;border:0;background:transparent;color:var(--chapter-ink);font:600 .82rem/1 var(--nx-font-body,Arial,sans-serif);letter-spacing:.01em;cursor:pointer;transition:color .2s ease,transform .2s ease}
+.nx-film-capability-link:hover{color:var(--chapter-accent);transform:translateX(3px)}
+.nx-film-capability-link:focus-visible{outline:2px solid var(--chapter-accent);outline-offset:4px;border-radius:2px}
+.nx-film-final-link{display:inline-flex;align-items:center;gap:.75rem;min-height:3rem;margin-top:2rem;padding:.8rem 1.2rem;border-radius:999px;background:var(--chapter-ink);color:#1b151e;font:600 .9rem/1 var(--nx-font-body,Arial,sans-serif);text-decoration:none;transition:transform .2s ease,background .2s ease}
+.nx-film-final-link:hover{background:#fff;transform:translateY(-2px)}
+@media(max-width:760px){
+  .nx-film-chapter--title{height:540vh}
+  .nx-film-chapter--continuation{height:260vh}
+  .nx-film-chapter--continuation .nx-film-message{align-items:flex-start;width:calc(100% - 3rem)}
+  .nx-film-chapter--continuation .nx-film-message>.heading{max-width:10ch;font-size:clamp(3rem,14vw,5rem);line-height:.96}
+  .nx-film-chapter--continuation .nx-film-message>.body{max-width:31rem;margin-top:1.35rem;font-size:1rem}
+  .nx-film-chapter--title .nx-film-message,.nx-film-chapter--title .nx-film-capabilities,.nx-film-chapter--title .nx-film-final-cta{align-items:flex-start;text-align:left;width:calc(100% - 3rem)}
+  .nx-film-chapter--title .nx-film-message>.heading,.nx-film-chapter--title .nx-film-final-cta>.heading{max-width:9ch;font-size:clamp(3.25rem,15vw,5.5rem)}
+  .nx-film-capabilities ol{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .nx-film-chapter--continuation .nx-film-message--forward{display:none}
+  .nx-film-chapter--continuation[data-continuation-phase="forward"] .nx-film-message--creative{display:flex;opacity:1;filter:none;transform:none}
+  .nx-film-chapter--title{height:auto;min-height:0;padding:4rem 0}
+  .nx-film-chapter--title .nx-film-stage{position:relative;height:auto;min-height:0;overflow:visible}
+  .nx-film-chapter--title .nx-film-video{display:none}
+  .nx-film-chapter--title .nx-film-chapter-copy{display:flex;gap:3rem;min-height:0;padding:0 1.5rem}
+  .nx-film-chapter--title .nx-film-message,.nx-film-chapter--title .nx-film-capabilities,.nx-film-chapter--title .nx-film-final-cta{position:static;visibility:visible;width:100%;opacity:1;filter:none;pointer-events:auto;transform:none}
+}

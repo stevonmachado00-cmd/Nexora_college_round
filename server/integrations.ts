@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { Router } from "express";
 import { z } from "zod";
+import { runBusinessAgent } from "../agent/src/agent.ts";
 
 type ActionName =
   | "website.create_page_draft"
@@ -58,12 +59,10 @@ export function createIntegrationApi() {
     analyst: { ready: existsSync(analystEntry), mode: "Meta Ad Library · dry run" },
     agent: { ready: true, mode: "Approval-gated planner" },
   }));
-  router.post("/agent/plan", (req, res) => {
+  router.post("/agent/plan", async (req, res) => {
     const input = z.object({ request: z.string().trim().min(3).max(2_000), approvedActionIds: z.array(z.string()).default([]) }).parse(req.body);
-    const plan = makePlan(input.request);
-    const pending = plan.filter((action) => action.needsApproval && !input.approvedActionIds.includes(action.id));
-    const results = plan.filter((action) => !action.needsApproval || input.approvedActionIds.includes(action.id)).map((action) => ({ actionId: action.id, status: "completed", message: `Prepared ${action.name}: ${action.description}` }));
-    res.json({ request: input.request, plan, status: pending.length ? "awaiting_approval" : "completed", results: pending.length ? [] : results });
+    const result = await runBusinessAgent(input);
+    res.json(result);
   });
   router.get("/analyst/scan-stream", async (req, res) => {
     const input = z.object({ pageId: z.string().trim().regex(/^\d{5,30}$/, "Enter a numeric Meta page ID."), country: z.string().regex(/^(?:[A-Z]{2}|ALL)$/).default("ALL"), ourPositioning: z.string().trim().max(1500).default("") }).parse(req.query);

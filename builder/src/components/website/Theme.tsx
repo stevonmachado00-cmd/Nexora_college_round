@@ -27,7 +27,7 @@ export function Theme({
     "--container": { compact: "960px", standard: "1160px", wide: "1320px" }[
       t.containerWidth
     ],
-    "--space": { compact: "48px", comfortable: "76px", generous: "108px" }[
+    "--space": { compact: "32px", comfortable: "48px", generous: "64px" }[
       t.spacingScale
     ],
   } as CSSProperties;

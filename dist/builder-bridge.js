@@ -42,7 +42,7 @@ const nexusStarterTemplates = [
   ["community-hub", "Community Hub", "Community", "Resources and gatherings"],
 ];
 function starterLibrary() {
-  return `<section class="card" style="padding:23px;margin-bottom:22px"><div class="card-head"><div><h2>Editable starter templates</h2><p style="margin-top:8px">Choose a foundation, then edit every component, image, copy, theme token, and business binding in the visual builder.</p></div><a class="btn" href="/builder">View all templates →</a></div><div class="sites-grid" style="margin-top:18px">${nexusStarterTemplates.map(([id,name,category,description],index)=>`<article class="card" style="padding:0;overflow:hidden"><div class="site-cover ${index%3===1?'alt':index%3===2?'orange':''}"><div class="mini-site"><div class="mini-nav"><strong>${esc(name.split(" ")[0].toLowerCase())}.</strong><span>About &nbsp; Contact</span></div><h3>${esc(name)}</h3><p>${esc(description)}</p></div></div><div style="padding:16px"><span class="pill purple">${esc(category)}</span><h3 style="margin:12px 0 7px">${esc(name)}</h3><a class="btn" style="display:inline-flex;margin-top:8px" href="/builder?template=${encodeURIComponent(id)}">Customize →</a></div></article>`).join("")}</div></section>`;
+  return `<section class="ds-section"><div class="ds-section-head"><div><h2>Find your starting point</h2><p>Choose a foundation, then shape it around your brand in the builder.</p></div><a class="link" href="/builder">Explore all templates</a></div><div class="ds-template-grid">${nexusStarterTemplates.map(([id,name,category,description])=>`<article class="ds-template-tile"><div class="ds-template-preview" aria-hidden="true"><div><span></span><span></span></div><strong>${esc(name)}</strong><i></i><i></i></div><div><span class="ds-template-category">${esc(category)}</span><h3>${esc(name)}</h3><p>${esc(description)}</p><a class="btn" href="/builder?template=${encodeURIComponent(id)}">Use template</a></div></article>`).join("")}</div></section>`;
 }
 function websites() {
   queueMicrotask(async () => {
@@ -54,16 +54,10 @@ function websites() {
       const projects = await response.json();
       if (!Array.isArray(projects)) throw new Error("invalid");
       container.innerHTML = projects.length
-        ? projects
-            .map(
-              (p) =>
-                `<article class="card" style="padding:24px"><span class="pill ${p.status === "published" ? "green" : ""}">${p.status === "published" ? "Published snapshot" : "Draft"}</span><h2 style="margin:18px 0 8px">${esc(p.name)}</h2><p>/site/${esc(p.slug)}</p><a class="btn" style="margin-top:18px;display:inline-flex" href="/builder/${encodeURIComponent(p.id)}">Open in Puck →</a></article>`,
-            )
-            .join("")
-        : '<div class="card" style="padding:28px"><h2>Your first website starts here.</h2><p>Choose a template or describe your business in the builder.</p><a class="btn primary" style="display:inline-flex;margin-top:15px" href="/builder">Create a website →</a></div>';
+        ? NexusPages.projectRows(projects)
+        : NexusUI.empty({title:"Your next website starts here",description:"Create a draft from a foundation or describe what you want to build.",kind:"website",action:'<a class="btn" href="/builder">Create a website</a>'});
     } catch {
-      container.innerHTML =
-        '<div class="card" style="padding:24px"><h2>Start the Nexus server to load projects.</h2><p>The Puck builder and project API run with npm run dev.</p></div>';
+      container.innerHTML = NexusUI.empty({title:"Websites are unavailable",description:"Your saved work could not be loaded. Try again shortly.",kind:"error",action:'<button class="btn" data-action="websites-retry">Try again</button>'});
     }
   });
   return (
@@ -72,7 +66,8 @@ function websites() {
       "Real drafts, controlled components, and published snapshots.",
       '<a class="btn primary" href="/builder">＋ Create website</a>',
     ) +
-    `<div class="card" style="padding:23px;margin-bottom:22px"><h2>Build a website around your business.</h2><p style="margin-top:8px">Choose a designed foundation. Edit visually in Puck. Review assisted changes before applying them.</p><a class="link" style="display:inline-block;margin-top:12px" href="/builder">Explore the website builder →</a></div>${starterLibrary()}<div id="nexus-saved-websites" class="sites-grid"><p>Loading your projects…</p></div>`
+    `<section class="ds-section" style="margin-top:0"><div class="ds-section-head"><h2>Your projects</h2><span>Drafts and published pages</span></div><div id="nexus-saved-websites">${NexusUI.loading('Loading websites')}</div></section>${starterLibrary()}`
   );
 }
+document.addEventListener('click',event=>{if(event.target.closest('[data-action="websites-retry"]'))renderContent()});
 if (page === "website") renderContent();

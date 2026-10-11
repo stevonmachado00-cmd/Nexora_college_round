@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Nexus · Billing Console</title>
+  <title>Nexus. Billing Console</title>
   <link rel="stylesheet" href="console.css">
   <link rel="stylesheet" href="billing.css">
-</head>
-<body>
-  <header><a href="/#billing">◈ Nexus</a><span>Billing Console</span><div id="identity"></div></header>
+<link rel="stylesheet" href="/design-system.css"><link rel="stylesheet" href="/public-system.css"></head>
+<body class="ds-console">
+  <header><a href="/#billing">Nexus</a><span>Billing Console</span><div id="identity"></div></header>
   <main>
     <section id="login" class="login card">
-      <div class="eyebrow">BILLING CONSOLE</div>
+      <div class="eyebrow">Billing console</div>
       <h1>Sign in to continue</h1>
       <p>Billing configuration and activity are protected by the local operator account.</p>
       <form id="login-form">
@@ -22,13 +22,13 @@
     </section>
     <div id="workspace" hidden>
       <div class="heading">
-        <div><div class="eyebrow">PROTECTED WORKSPACE</div><h1>Billing Console</h1><p>Review connected plans, subscriptions, and provider activity.</p></div>
-        <span class="environment">LOCAL / BILLING MODE</span>
+        <div><div class="eyebrow">Protected workspace</div><h1>Billing Console</h1><p>Review connected plans, subscriptions, and provider activity.</p></div>
+        <span class="environment">Local / billing mode</span>
       </div>
       <div id="content"></div>
     </div>
     <div id="notice" role="status"></div>
   </main>
-  <script src="console.js"></script>
+  <script src="/design-ui.js"></script><script src="console.js"></script>
 </body>
 </html>

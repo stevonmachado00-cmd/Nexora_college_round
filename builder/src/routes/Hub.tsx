@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { templates, getTemplate, emptyWebsite } from "../../shared/templates";
 import type { WebsiteDocument } from "../../shared/schema";
 import { generateWebsite, projectStorage, request } from "../lib/api";
-import { Logo, Status, message, slugify, type Health } from "../components/UI";
+import { Logo, Status, Loading, Empty, message, slugify, type Health } from "../components/UI";
 import { imageSource } from "../components/website/assets/catalog";
 export default function Hub({ health }: { health: Health }) {
   const [prompt, setPrompt] = useState(""),
+    [projectsLoading, setProjectsLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [category, setCategory] = useState("All templates"),
@@ -22,7 +23,8 @@ export default function Hub({ health }: { health: Health }) {
   useEffect(() => {
     request<typeof projects>("/projects")
       .then(setProjects)
-      .catch((e) => setError(message(e)));
+      .catch((e) => setError(message(e)))
+      .finally(() => setProjectsLoading(false));
     const selected = new URLSearchParams(location.search).get("template");
     if (selected) {
       if (selected === "blank" || templates.some((t) => t.id === selected))
@@ -69,14 +71,12 @@ export default function Hub({ health }: { health: Health }) {
     <div className="nb-hub">
       <header className="nb-hub-nav">
         <Logo />
-        <a href="/#projects">Back to workspace ↗</a>
+        <a href="/#projects">Back to workspace </a>
       </header>
       <main>
         <div className="nb-heading">
-          <span className="nb-kicker">WEBSITE BUILDER</span>
           <h1>
-            A clear starting point.
-            <br />A website you can make your own.
+            Your next website starts here.
           </h1>
           <p>
             Describe your business or choose a considered foundation. Edit every
@@ -85,7 +85,7 @@ export default function Hub({ health }: { health: Health }) {
         </div>
         <section className="nb-prompt-card">
           <div>
-            <span className="nb-assistant-mark">✦</span>
+            <span className="nb-assistant-mark" aria-hidden="true">N</span>
             <strong>What are you building?</strong>
             <span className="nb-provider">
               {health.demo ? "Demo composer" : "AI connected"}
@@ -100,7 +100,7 @@ export default function Hub({ health }: { health: Health }) {
           <footer>
             <small>
               {health.demo
-                ? "Rules-based demo · no model or API key required"
+                ? "Rules-based demo. no model or API key required"
                 : health.provider}
             </small>
             <button
@@ -108,7 +108,7 @@ export default function Hub({ health }: { health: Health }) {
               disabled={busy || prompt.trim().length < 5}
               onClick={() => create("generate")}
             >
-              {busy ? "Creating…" : "Generate website ↗"}
+              {busy ? "Creating…" : "Generate website "}
             </button>
           </footer>
         </section>
@@ -128,7 +128,7 @@ export default function Hub({ health }: { health: Health }) {
             <button className="nb-button" disabled={busy} onClick={() => create("blank")}>＋ Start blank</button>
           </div>
         </div>
-        <div className="nb-template-grid">
+        <div className="nb-template-grid" id="templates">
           {visibleTemplates.map((t) => (
             <article key={t.id} className="nb-template-card">
               <div className={`nb-template-art art-${t.id}`}>
@@ -137,7 +137,7 @@ export default function Hub({ health }: { health: Health }) {
                   <b>{t.brand.toLowerCase()}.</b>
                   <span>About &nbsp; Contact</span>
                 </div>
-                <span>{t.category} / A NEXUS FOUNDATION</span>
+                <span>{t.category} foundation</span>
                 <h3>{t.headline}</h3>
                 <div className="nb-art-blocks">
                   <i />
@@ -156,7 +156,7 @@ export default function Hub({ health }: { health: Health }) {
                   disabled={busy}
                   onClick={() => create(t.id)}
                 >
-                  Use this template →
+                  Use this template
                 </button>
               </div>
             </article>
@@ -169,7 +169,7 @@ export default function Hub({ health }: { health: Health }) {
           </div>
           <small>{projects.length} projects</small>
         </div>
-        {projects.length ? (
+        {projectsLoading ? <Loading /> : projects.length ? (
           <div className="nb-project-list">
             {projects.map((p) => (
               <a key={p.id} href={`/builder/${p.id}`}>
@@ -182,15 +182,11 @@ export default function Hub({ health }: { health: Health }) {
                   {p.status}
                 </span>
                 <time>{new Date(p.updatedAt).toLocaleDateString()}</time>
-                <span>↗</span>
               </a>
             ))}
           </div>
         ) : (
-          <div className="nb-empty">
-            Your first website starts above. Generate a draft or choose a
-            template.
-          </div>
+          <Empty title="Make room for your next idea"><p>Generate a draft or choose a template. Your saved websites will appear here.</p><a className="nb-button" href="#templates">Explore templates</a></Empty>
         )}
         <p className="nb-footnote">
           Controlled components. Shared design tokens. Editable content. No

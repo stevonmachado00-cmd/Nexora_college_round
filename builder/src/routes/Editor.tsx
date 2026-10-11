@@ -347,17 +347,17 @@ function Editor({
     <ToolsContext value={tools}>
       <div className={`nb-editor ${aiOpen ? "assistant-open" : ""}`}>
         <div className="nb-editor-meta">
-          <a href="/builder">← Websites</a>
+          <a href="/builder"> Websites</a>
           <span>
             {templates.find((t) => t.id === project.document.template)?.name ||
               "Blank page"}{" "}
             <i>/</i>{" "}
             {project.status === "published"
-              ? "Published · editing draft"
+              ? "Published. editing draft"
               : "Draft"}
           </span>
           <span>
-            {health.demo ? "Demo composer · no model" : health.provider}
+            {health.demo ? "Demo composer. no model" : health.provider}
           </span>
         </div>
         <Status text={error} error />
@@ -416,7 +416,7 @@ function Editor({
                 disabled={aiBusy || instruction.trim().length < 5}
                 onClick={() => void ask()}
               >
-                {aiBusy ? "Preparing proposal…" : "Propose changes ↗"}
+                {aiBusy ? "Preparing proposal…" : "Propose changes "}
               </button>
               <div className="nb-suggestions">
                 {[
@@ -427,13 +427,13 @@ function Editor({
                   "Make the entire website use a dark theme",
                 ].map((s) => (
                   <button key={s} onClick={() => setInstruction(s)}>
-                    {s} ↗
+                    {s}
                   </button>
                 ))}
               </div>
               {proposal && (
                 <section className="nb-proposal">
-                  <span>REVIEW PROPOSED CHANGES</span>
+                  <span>Review proposed changes</span>
                   <ul>
                     {proposal.changes.map((c, i) => (
                       <li key={i}>{c}</li>
@@ -457,9 +457,9 @@ function Editor({
                 </section>
               )}
               <div className="nb-ai-context">
-                <span>PAGE CONTEXT</span>
+                <span>Page context</span>
                 <strong>
-                  {current.current.data.content.length} sections · {revision}{" "}
+                  {current.current.data.content.length} sections. {revision}{" "}
                   changes
                 </strong>
                 <p>
@@ -473,7 +473,7 @@ function Editor({
               </details>
               {project.status === "published" && (
                 <a className="nb-published-link" href={`/site/${project.slug}`}>
-                  Open published snapshot ↗
+                  Open published snapshot
                 </a>
               )}
             </aside>
@@ -494,7 +494,7 @@ function Editor({
               >
                 ×
               </button>
-              <span className="nb-kicker">PUBLISH WEBSITE</span>
+              <span className="nb-kicker">Publish website</span>
               <h2 id="publish-title">A snapshot ready to share.</h2>
               <p>
                 Publish this draft at the route below. Future draft edits will

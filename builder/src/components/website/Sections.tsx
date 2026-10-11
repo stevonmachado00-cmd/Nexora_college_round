@@ -47,7 +47,7 @@ function LinkButton({
       href={url || "#"}
     >
       {text}
-      <span aria-hidden="true">↗</span>
+      <span aria-hidden="true"> </span>
     </a>
   ) : null;
 }
@@ -124,7 +124,7 @@ function ProductIllustration() {
           <span>Reports</span>
         </div>
         <div className="product-content">
-          <small>WORK IN PERSPECTIVE</small>
+          <small>Work in perspective</small>
           <h3>A clear path forward.</h3>
           <div className="product-bars">
             {[38, 66, 45, 74, 59, 89, 72, 96].map((height, i) => (
@@ -162,7 +162,7 @@ export function Features(p: ComponentProps<"Features">) {
         {p.items.map((item, i) => (
           <article key={i}>
             <span className="nw-icon" aria-hidden="true">
-              {["◈", "↗", "⊞"][i % 3]}
+              {["◈", " ", "⊞"][i % 3]}
             </span>
             <h3>{item.title}</h3>
             <p>{item.description}</p>

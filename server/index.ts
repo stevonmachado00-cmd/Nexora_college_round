@@ -16,6 +16,16 @@ app.use("/api/webinars", createWebinarApi());
 app.use("/api/webinars/google", createGoogleCalendarApi());
 app.use("/api/integrations", createIntegrationApi());
 app.use("/api/integrated-analysis", createIntegratedAnalysisApi());
+app.get("/api/billing/availability", async (_req, res) => {
+  try {
+    const response = await fetch("http://127.0.0.1:4175/console.html", {
+      signal: AbortSignal.timeout(1500),
+    });
+    res.json({ available: response.status < 500 });
+  } catch {
+    res.json({ available: false });
+  }
+});
 if (!production) {
   const { createServer } = await import("vite");
   const vite = await createServer({
