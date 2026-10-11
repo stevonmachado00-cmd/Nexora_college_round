@@ -53,7 +53,7 @@ Drafting, analysis, simulation, internal reporting, and building a proposed audi
 | Need | Recommended tool | Role in Nexura | Notes |
 | --- | --- | --- | --- |
 | Agent orchestration | **LangGraph** | Runs the multi-agent workflow, state, approvals, and retries. | Keep tool permissions narrow and action logs durable. |
-| Public-source research | **Agent Reach** | Broad source discovery across public web/social/developer sources where its integrations support them. | Treat results as research leads; respect source terms and privacy rules. |
+| Competitor Meta-ad research | **AdRadar** | Scans public Meta Ad Library inventory and saves a bounded campaign snapshot for review. | Treat results as research leads; retain the source URL and respect platform terms. |
 | AI-native web/company search | **Exa** | Semantic web search and company/person research for prospecting and market context. | Good first-choice hosted research API; validate high-stakes facts. |
 | Web crawling | **Crawl4AI** | Self-hostable crawling and structured extraction. | Best when control and predictable operating cost matter. |
 | Hosted scraping fallback | **Firecrawl** | Robust crawl/extract option when self-hosting is not preferred. | Assess cost and compliance per workload. |

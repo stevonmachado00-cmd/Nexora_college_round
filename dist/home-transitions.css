@@ -8,6 +8,18 @@
 /* Keep a film's paint work inside its own viewport while it is pinned. */
 .nx-film-hero,.nx-film-chapter{contain:paint}
 
+/* The navigation is part of the opening frame rather than a separate page bar. */
+.nx-film-home .nx-film-nav{border-bottom-color:rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(10,10,15,.68),rgba(10,10,15,.22));color:#fff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.nx-film-home .nx-film-nav .ds-brand,.nx-film-home .nx-film-nav nav a{color:rgba(255,255,255,.8)}
+.nx-film-home .nx-film-nav .ds-brand{letter-spacing:-.035em}
+.nx-film-home .nx-film-nav nav{gap:clamp(1rem,2.5vw,2rem)}
+.nx-film-home .nx-film-nav nav a{position:relative;padding:.55rem 0;font-weight:600;transition:color .22s ease}
+.nx-film-home .nx-film-nav nav a::after{content:"";position:absolute;right:0;bottom:.22rem;left:0;height:1px;background:#fff;transform:scaleX(0);transform-origin:right;transition:transform .28s cubic-bezier(.2,.7,.2,1)}
+.nx-film-home .nx-film-nav nav a:hover,.nx-film-home .nx-film-nav nav a:focus-visible{color:#fff}
+.nx-film-home .nx-film-nav nav a:hover::after,.nx-film-home .nx-film-nav nav a:focus-visible::after{transform:scaleX(1);transform-origin:left}
+.nx-film-home .nx-film-nav .btn{border-color:rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.nx-film-home .nx-film-nav .btn:hover{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.2);transform:translateY(-1px)}
+
 .nx-film-explore{isolation:isolate;overflow:hidden}
 .nx-film-explore::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,rgba(255,255,255,0) 26%,rgba(255,255,255,.52) 48%,rgba(255,255,255,0) 68%);opacity:0;transform:translateX(-115%)}
 .nx-film-explore:hover::before,.nx-film-explore:focus-visible::before{opacity:1;transform:translateX(115%);transition:transform .55s ease,opacity .14s ease}
@@ -19,12 +31,52 @@
 .nx-film-capabilities li:hover{border-color:rgba(255,255,255,.72);background:rgba(20,15,23,.66);transform:translateY(-3px)}
 .nx-film-final-link{box-shadow:0 10px 28px rgba(0,0,0,.2)}
 
+/* Give the capability frame its own small sense of depth without animating video. */
+.nx-film-capabilities ol{perspective:900px}
+.nx-film-capabilities li{position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.14);isolation:isolate}
+.nx-film-capabilities li::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(125deg,rgba(255,255,255,.16),transparent 38%);opacity:0;transition:opacity .24s ease}
+.nx-film-capabilities li:hover::after,.nx-film-capabilities li:focus-within::after{opacity:1}
+.nx-film-capabilities li>svg{transition:transform .24s cubic-bezier(.2,.7,.2,1),color .24s ease}
+.nx-film-capabilities li:hover>svg,.nx-film-capabilities li:focus-within>svg{color:#fff;transform:translateY(-2px) scale(1.08)}
+.nx-film-capability-link span,.nx-film-final-link span{transition:transform .2s ease}
+.nx-film-capability-link:hover span,.nx-film-capability-link:focus-visible span,.nx-film-final-link:hover span,.nx-film-final-link:focus-visible span{transform:translate(2px,-2px)}
+
+/* The lower, non-video surface retains the same deliberate cadence. */
+.nx-film-home .ds-home-proof>div{position:relative;overflow:hidden;transition:background-color .24s ease,color .24s ease}
+.nx-film-home .ds-home-proof>div::after{content:"";position:absolute;inset:auto 0 0;height:2px;background:var(--nx-brand);transform:scaleX(0);transform-origin:left;transition:transform .34s cubic-bezier(.2,.7,.2,1)}
+.nx-film-home .ds-home-proof>div:hover{background:color-mix(in srgb,var(--nx-brand-soft) 72%,transparent)}
+.nx-film-home .ds-home-proof>div:hover::after{transform:scaleX(1)}
+.nx-film-home .ds-home-project-grid>a{position:relative;overflow:hidden}
+.nx-film-home .ds-home-project-grid>a h3{transition:color .2s ease,transform .2s ease}
+.nx-film-home .ds-home-project-grid>a:hover h3{color:var(--nx-brand);transform:translateX(4px)}
+.nx-film-home .ds-home-project-art i{transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1),background-color .25s ease}
+.nx-film-home .ds-home-project-grid>a:hover .ds-home-project-art i{background:var(--nx-brand);transform:scaleX(1.12)}
+
 @media (prefers-reduced-motion:no-preference){
   .nx-film-explore{animation:nx-cta-settle .7s cubic-bezier(.2,.72,.22,1) .35s both}
+  .nx-film-home .nx-film-nav{animation:nx-nav-in .72s cubic-bezier(.2,.72,.22,1) both}
+  .nx-film-chapter--title[data-title-phase="capabilities"] .nx-film-capabilities li{animation:nx-capability-in .52s cubic-bezier(.2,.72,.22,1) both}
+  .nx-film-chapter--title[data-title-phase="capabilities"] .nx-film-capabilities li:nth-child(2){animation-delay:.09s}
+  .nx-film-chapter--title[data-title-phase="capabilities"] .nx-film-capabilities li:nth-child(3){animation-delay:.18s}
+  @supports (animation-timeline:view()){
+   .nx-film-home .ds-home-proof>div{animation:nx-surface-in linear both;animation-timeline:view();animation-range:entry 10% cover 45%}
+   .nx-film-home .ds-home-project-grid>a{animation:nx-surface-in linear both;animation-timeline:view();animation-range:entry 6% cover 38%}
+   .nx-film-home .ds-home-project-grid>a:nth-child(2){animation-range:entry 12% cover 44%}
+   .nx-film-home .ds-home-project-grid>a:nth-child(3){animation-range:entry 18% cover 50%}
+  }
 }
 
 @keyframes nx-cta-settle{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes nx-nav-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes nx-capability-in{from{opacity:0;transform:translate3d(0,18px,0) rotateX(-5deg)}to{opacity:1;transform:translate3d(0,0,0) rotateX(0)}}
+@keyframes nx-surface-in{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 
 @media (prefers-reduced-motion:reduce){
-  .nx-film-explore,.nx-film-explore::before,.nx-film-explore span,.nx-film-capabilities li{animation:none!important;transition:none!important;transform:none!important}
+  .nx-film-home .nx-film-nav,.nx-film-explore,.nx-film-explore::before,.nx-film-explore span,.nx-film-capabilities li,.nx-film-capabilities li::after,.nx-film-capabilities li>svg,.nx-film-capability-link span,.nx-film-final-link span,.nx-film-home .ds-home-proof>div,.nx-film-home .ds-home-proof>div::after,.nx-film-home .ds-home-project-grid>a h3,.nx-film-home .ds-home-project-art i{animation:none!important;transition:none!important;transform:none!important}
+}
+
+@media(max-width:760px){
+  .nx-film-home .nx-film-nav{background:rgba(10,10,15,.78)}
+  .nx-film-home .nx-film-nav nav{background:#14111a;border-bottom-color:rgba(255,255,255,.14)}
+  .nx-film-home .nx-film-nav .ds-mobile-nav{color:#fff}
 }

@@ -1,0 +1,5 @@
+Full Name,Email Address,Company Name,Lead Status,Lead Source
+Ada Lovelace,ada@example.com,Analytical Engines,Qualified,Webinar
+Grace Hopper,grace@example.com,Compilers Inc,Customer,Referral
+Not An Email,invalid-email,Example Co,New lead,Website
+Email Only,email.only@example.com,,,Campaign

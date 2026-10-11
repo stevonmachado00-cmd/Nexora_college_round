@@ -8,7 +8,7 @@ const query = new URLSearchParams(location.search);
 if (query.get('embed') === '1') document.body.classList.add('embedded');
 applyTheme(query.get('theme'));
 window.addEventListener('message', event => {
-  if (event.origin !== 'http://127.0.0.1:4173' && event.origin !== 'http://localhost:4173') return;
+  if (event.origin !== window.location.origin) return;
   if (event.data?.type === 'nexus-theme') applyTheme(event.data.theme);
 });
 const $ = selector => document.querySelector(selector);
@@ -16,8 +16,9 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&
 const table = (heads, rows) => rows.length ? `<div class="table-wrap"><table class="table"><thead><tr>${heads.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : NexusUI.empty({title:"No activity yet",description:"Saved billing activity will appear here.",kind:"billing",compact:true});
 
 async function api(path, method='GET', payload) {
-  const response = await fetch('/api' + path, {method, credentials:'same-origin', headers:payload ? {'Content-Type':'application/json'} : {}, body:payload ? JSON.stringify(payload) : undefined});
-  const data = await response.json().catch(() => { throw new Error("Billing service is unavailable. Open the billing service on port 4175."); });
+  const base = query.get('embed') === '1' ? '/api/billing' : '/api';
+  const response = await fetch(base + path, {method, credentials:'same-origin', headers:payload ? {'Content-Type':'application/json'} : {}, body:payload ? JSON.stringify(payload) : undefined});
+  const data = await response.json().catch(() => { throw new Error("Billing returned an unexpected response. Please try again."); });
   if (!response.ok) throw new Error(data.error || 'Request failed');
   return data;
 }

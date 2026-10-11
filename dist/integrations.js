@@ -20,7 +20,7 @@
       button.setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} mode`);
       button.setAttribute("aria-pressed", String(dark));
     }
-    document.getElementById("billing-console")?.contentWindow?.postMessage({ type: "nexus-theme", theme }, "http://127.0.0.1:4175");
+    document.getElementById("billing-console")?.contentWindow?.postMessage({ type: "nexus-theme", theme }, window.location.origin);
   }
   function addThemeToggle() {
     const actions = document.querySelector(".topactions");
@@ -43,12 +43,66 @@
     "Proposal": [["Atlas Works", "Priya Shah", "Referral", "$6,400"]],
     "Customer": [["Orbit", "Sophia Chen", "Campaign", "$149 / mo"], ["Mono", "Amelia Kim", "Webinar", "$149 / mo"]]
   };
+  const crmImportStorageKey = "nexus.crm-local-import.v1";
+  const loadCrmImport = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(crmImportStorageKey) || "null");
+      return Array.isArray(saved?.contacts) ? saved : { contacts: [] };
+    } catch { return { contacts: [] }; }
+  };
+  const saveCrmImport = (data) => localStorage.setItem(crmImportStorageKey, JSON.stringify(data));
+  const clearCrmImport = () => localStorage.removeItem(crmImportStorageKey);
+  const initials = (value) => value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+  const crmPersonRows = () => {
+    const imported = loadCrmImport().contacts.map((contact) => [initials(contact.name), contact.name, contact.email || "No email", contact.company || "—", contact.status || "New lead", contact.source || "Spreadsheet import"]);
+    return [...people, ...imported];
+  };
+  function crmImportSummary() {
+    const imported = loadCrmImport();
+    if (!imported.contacts.length) return "No file imported yet. Sample records remain available below.";
+    const date = imported.importedAt ? new Date(imported.importedAt).toLocaleString() : "this browser session";
+    return `${imported.contacts.length} contact${imported.contacts.length === 1 ? "" : "s"} imported from ${escapeHtml(imported.fileName || "a spreadsheet")} · ${date}`;
+  }
+  function bindCrmImport() {
+    const input = document.getElementById("crm-import-file");
+    if (!input || input.dataset.bound) return;
+    input.dataset.bound = "true";
+    input.addEventListener("change", () => {
+      const [file] = input.files || [];
+      if (file) void importCrmFile(file);
+      input.value = "";
+    });
+  }
+  async function importCrmFile(file) {
+    const progress = document.getElementById("crm-import-progress");
+    const allowed = /\.(csv|xlsx)$/i.test(file.name);
+    if (!allowed) { if (progress) progress.innerHTML = '<p class="crm-import-error">Choose a CSV or XLSX file.</p>'; return; }
+    if (file.size > 5 * 1024 * 1024) { if (progress) progress.innerHTML = '<p class="crm-import-error">Keep the file under 5 MB for this local import.</p>'; return; }
+    if (progress) progress.innerHTML = '<p class="crm-import-pending">Reading columns and validating contacts locally…</p>';
+    try {
+      const response = await fetch(`${api}/crm/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream", "X-Nexus-File-Name": file.name },
+        body: await file.arrayBuffer(),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The spreadsheet could not be imported.");
+      saveCrmImport(data);
+      toast(`${data.contacts.length} contacts are ready in this browser.`, "ok");
+      renderContent();
+    } catch (error) {
+      if (progress) progress.innerHTML = `<p class="crm-import-error">${escapeHtml(error.message || "The spreadsheet could not be imported.")}</p>`;
+    }
+  }
   const crmWorkspace = () => {
     const activeTab = tab || "All contacts";
     const pipeline = Object.entries(crmPipeline).map(([stage, deals]) => `<div class="column"><h3>${stage} ${badge(String(deals.length), stage === "Customer" ? "green" : stage === "Proposal" ? "purple" : "")}</h3>${deals.map(([company, contact, source, value]) => `<article class="deal"><h3>${company}</h3><p>${contact}. ${source}</p><div class="deal-footer"><span>${value}</span>${badge(stage, stage === "Customer" ? "green" : "purple")}</div></article>`).join("")}</div>`).join("");
-    const metrics = `<div class="metrics"><div class="card metric"><div class="metric-top"><span>Open pipeline</span><span class="metric-icon">♧</span></div><div class="metric-value">$18.6k</div><div class="metric-foot"><span class="up"> 8 active deals</span><span>illustrative</span></div></div><div class="card metric"><div class="metric-top"><span>Qualified leads</span><span class="metric-icon">✧</span></div><div class="metric-value">42</div><div class="metric-foot"><span class="up"> 18.6%</span><span>this month</span></div></div><div class="card metric"><div class="metric-top"><span>Customers</span><span class="metric-icon">▦</span></div><div class="metric-value">892</div><div class="metric-foot"><span class="up"> 8.2%</span><span>this month</span></div></div></div>`;
-    const contactList = activeTab === "Customers" ? people.filter((person) => person[4] === "Customer") : activeTab === "Leads" ? people.filter((person) => person[4] !== "Customer") : people;
-    return head("Nexus demo CRM", "A ready-to-show workspace with contacts, deal stages, and customer context already in place.", badge("Demo workspace ready", "purple")) + tabs(["All contacts", "Leads", "Customers", "Pipeline"]) + (activeTab === "Pipeline" ? `<section class="board" aria-label="Demo sales pipeline">${pipeline}</section>` : `${metrics}<section class="card" style="margin-top:var(--nx-space-24)"><div class="card-head"><div><h2>${activeTab}</h2><p>Preloaded sample records for your presentation.</p></div>${badge(`${contactList.length} contacts`, "purple")}</div><div class="table-wrap"><table class="table"><thead><tr><th>Contact</th><th>Company</th><th>Status</th><th>Source</th></tr></thead><tbody>${contactList.map((person) => `<tr><td><div class="person"><span class="avatar">${person[0]}</span><div>${person[1]}<small>${person[2]}</small></div></div></td><td>${person[3]}</td><td>${badge(person[4], person[4] === "Customer" ? "green" : person[4] === "Qualified" ? "purple" : "")}</td><td>${person[5]}</td></tr>`).join("")}</tbody></table></div><p class="bottomnote" style="padding:var(--nx-space-16);margin:0">Demo data only. Every contact and activity is ready to present.</p></section>`);
+    const metrics = `<div class="metrics"><div class="card metric"><div class="metric-top"><span>Open pipeline</span><span class="metric-icon">♧</span></div><div class="metric-value">$18.6k</div><div class="metric-foot"><span class="up"> 8 active deals</span><span>illustrative</span></div></div><div class="card metric"><div class="metric-top"><span>Imported contacts</span><span class="metric-icon">⇧</span></div><div class="metric-value">${loadCrmImport().contacts.length}</div><div class="metric-foot"><span class="up">Local only</span><span>this browser</span></div></div><div class="card metric"><div class="metric-top"><span>Customers</span><span class="metric-icon">▦</span></div><div class="metric-value">892</div><div class="metric-foot"><span class="up"> 8.2%</span><span>sample workspace</span></div></div></div>`;
+    const allContacts = crmPersonRows();
+    const contactList = activeTab === "Customers" ? allContacts.filter((person) => person[4] === "Customer") : activeTab === "Leads" ? allContacts.filter((person) => person[4] !== "Customer") : allContacts;
+    const imported = loadCrmImport();
+    const importer = `<section class="card crm-import" aria-labelledby="crm-import-title"><div><span class="analysis-kicker">Bring your own contacts</span><h2 id="crm-import-title">Import a CRM spreadsheet</h2><p>Choose CSV or XLSX with common columns such as Name, Email, Company, Status, and Source. Nexus maps the first worksheet and keeps the normalized contact list only in this browser.</p></div><div class="crm-import-actions"><input id="crm-import-file" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn primary" data-action="crm-import-picker">Choose spreadsheet </button>${imported.contacts.length ? '<button class="btn" data-action="crm-import-clear">Clear local import</button>' : ""}</div><div id="crm-import-progress" class="crm-import-status"><span>${crmImportSummary()}</span><small>Your original file is not stored or sent to a CRM. Maximum 500 valid contacts / 5 MB.</small></div></section>`;
+    return head("Nexus CRM", "Import a contact spreadsheet, review it in context, and keep the working list in this browser.", badge("Local import ready", "purple")) + importer + tabs(["All contacts", "Leads", "Customers", "Pipeline"]) + (activeTab === "Pipeline" ? `<section class="board" aria-label="Demo sales pipeline">${pipeline}</section>` : `${metrics}<section class="card" style="margin-top:var(--nx-space-24)"><div class="card-head"><div><h2>${activeTab}</h2><p>${imported.contacts.length ? "Your imported contacts are shown alongside illustrative demo records." : "Preloaded sample records are available until you import a spreadsheet."}</p></div>${badge(`${contactList.length} contacts`, "purple")}</div><div class="table-wrap"><table class="table"><thead><tr><th>Contact</th><th>Company</th><th>Status</th><th>Source</th></tr></thead><tbody>${contactList.map((person) => `<tr><td><div class="person"><span class="avatar">${escapeHtml(person[0])}</span><div>${escapeHtml(person[1])}<small>${escapeHtml(person[2])}</small></div></div></td><td>${escapeHtml(person[3])}</td><td>${badge(escapeHtml(person[4]), person[4] === "Customer" ? "green" : person[4] === "Qualified" ? "purple" : "")}</td><td>${escapeHtml(person[5])}</td></tr>`).join("")}</tbody></table></div><p class="bottomnote" style="padding:var(--nx-space-16);margin:0">Imported records are browser-local. They are not sent to the demo CRM or any external service.</p></section>`);
   };
   const campaignsWorkspace = () => head("Competitor ads, in focus", "Search public Meta Ad Library inventory, then review the campaign mix in a decision-ready format.", btn("Refresh status", "analyst-refresh")) + `
     <section class="card integration-panel" id="analyst-workbench">
@@ -65,23 +119,34 @@
     </section>`;
   const billingWorkspace = () => head("Billing", "Manage live plans, subscriptions, and billing activity without leaving Nexus.") + `
     <section class="billing-embed-shell">
-      <iframe id="billing-console" class="billing-embed" title="Nexus Billing Console" src="http://127.0.0.1:4175/console.html?embed=1&theme=${document.body.dataset.theme || "light"}"></iframe>
+      <iframe id="billing-console" class="billing-embed" title="Nexus Billing Console" src="/billing/console.html?embed=1&theme=${document.body.dataset.theme || "light"}"></iframe>
     </section>`;
 
+  function activateWorkspaceMotion(content) {
+    content.classList.remove("nx-motion-page");
+    // This only runs on a route change, never during scroll or input.
+    void content.offsetWidth;
+    content.classList.add("nx-motion-page");
+  }
+  function mountWorkspace(content, markup) {
+    content.innerHTML = markup;
+    activateWorkspaceMotion(content);
+  }
   renderContent = function () {
     const content = document.getElementById("content");
-    if (page === "webinars") { window.nexusWebinarTab = tab || "Events"; content.innerHTML = head("Webinars", "Meaningful conversations, from invitation to follow-up.") + tabs(["Events", "Registrations"]) + `<div id="webinar-content" class="ds-webinar-body">${NexoraWebinars.render()}</div>`; void NexoraWebinars.refresh(); return; }
-    if (page === "analytics") { content.innerHTML = head("Analytics", "Understand the patterns. Keep the evidence in view.") + window.NexoraCompetitiveAnalysis.analyticsPanel(); return; }
+    if (page === "webinars") { window.nexusWebinarTab = tab || "Events"; mountWorkspace(content, head("Webinars", "Meaningful conversations, from invitation to follow-up.") + tabs(["Events", "Registrations"]) + `<div id="webinar-content" class="ds-webinar-body">${NexoraWebinars.render()}</div>`); void NexoraWebinars.refresh(); return; }
+    if (page === "analytics") { mountWorkspace(content, head("Analytics", "Understand the patterns. Keep the evidence in view.") + window.NexoraCompetitiveAnalysis.analyticsPanel()); return; }
     // Websites has a real builder bridge. It is intentionally not part of the
     // generic empty-state map even when the workspace has no saved projects.
-    if (page === "website") { content.innerHTML = websites(); return; }
+    if (page === "website") { mountWorkspace(content, websites()); return; }
     // Workflows remains the working module supplied by Nexora_dummy.
-    if (NexusPages[page] && page !== "workflows") { content.innerHTML = NexusPages[page](); return; }
-    if (page === "billing") { content.innerHTML = billingWorkspace(); return; }
-    if (page === "crm") { content.innerHTML = crmWorkspace(); return; }
-    if (page === "campaigns") { content.innerHTML = campaignsWorkspace(); void refreshAnalyst(); return; }
-    if (page === "agent") { content.innerHTML = agentWorkspace(); return; }
+    if (NexusPages[page] && page !== "workflows") { mountWorkspace(content, NexusPages[page]()); return; }
+    if (page === "billing") { mountWorkspace(content, billingWorkspace()); return; }
+    if (page === "crm") { mountWorkspace(content, crmWorkspace()); bindCrmImport(); return; }
+    if (page === "campaigns") { mountWorkspace(content, campaignsWorkspace()); void refreshAnalyst(); return; }
+    if (page === "agent") { mountWorkspace(content, agentWorkspace()); return; }
     originalRenderContent();
+    activateWorkspaceMotion(content);
   };
 
   async function refreshCrm() {
@@ -106,7 +171,7 @@
   }
   function setWorkbench(id, title, body) {
     const target = document.getElementById(id);
-    if (target) target.innerHTML = `<h2>${title}</h2>${body}`;
+    if (target) target.innerHTML = `<div class="nx-workbench-reveal"><h2>${title}</h2>${body}</div>`;
   }
   async function runAgent(approvedActionIds = []) {
     const request = document.getElementById("agent-request")?.value.trim() || window.nexusLastRequest;
@@ -166,6 +231,8 @@
     if (name === "theme-toggle") { setTheme(document.body.dataset.theme === "dark" ? "light" : "dark"); if (page === "settings") renderContent(); return; }
     if (name === "crm-refresh") return void refreshCrm();
     if (name === "crm-open") return window.open("http://127.0.0.1:8000/crm/lead", "_blank", "noopener");
+    if (name === "crm-import-picker") return void document.getElementById("crm-import-file")?.click();
+    if (name === "crm-import-clear") { clearCrmImport(); toast("The browser-local import was cleared.", "ok"); return renderContent(); }
     if (name === "analyst-refresh") return void refreshAnalyst();
     if (name === "analyst-run") return void runAnalyst();
     if (name === "analyst-load-saved") return void openSavedInventory();

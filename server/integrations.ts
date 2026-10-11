@@ -1,8 +1,11 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { spawn } from "node:child_process";
-import { Router } from "express";
+import { readFile, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { resolve, join } from "node:path";
+import { tmpdir } from "node:os";
+import { spawn, execFile as execFileCallback } from "node:child_process";
+import { promisify } from "node:util";
+import { randomUUID } from "node:crypto";
+import express, { Router } from "express";
 import { z } from "zod";
 import { runBusinessAgent } from "../agent/src/agent.ts";
 
@@ -15,6 +18,83 @@ type ActionName =
   | "analytics.get_funnel_report";
 
 type PlannedAction = { id: string; name: ActionName; description: string; needsApproval: boolean };
+
+type ImportedContact = {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  status: string;
+  source: string;
+};
+
+const importedContactLimit = 500;
+const acceptedContactExtensions = new Set(["csv", "xlsx"]);
+const contactHeaderAliases: Record<keyof Omit<ImportedContact, "id">, string[]> = {
+  name: ["name", "full name", "fullname", "contact name", "first name"],
+  email: ["email", "e-mail", "email address", "work email"],
+  company: ["company", "company name", "organization", "organisation", "account"],
+  status: ["status", "stage", "lifecycle stage", "lead status"],
+  source: ["source", "lead source", "origin"],
+};
+
+function normalizedHeader(value: unknown) {
+  return String(value ?? "").trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+}
+
+function cellText(value: unknown) {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, 250);
+}
+
+function fieldFromRow(row: Record<string, unknown>, field: keyof Omit<ImportedContact, "id">) {
+  const entries = Object.entries(row);
+  const aliases = contactHeaderAliases[field];
+  const match = entries.find(([header]) => aliases.includes(normalizedHeader(header)));
+  return cellText(match?.[1]);
+}
+
+const execFile = promisify(execFileCallback);
+
+async function spreadsheetRows(buffer: Buffer, fileName: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase() || "";
+  if (!acceptedContactExtensions.has(extension)) throw new Error("Choose a CSV or XLSX file.");
+  const workDir = await mkdtemp(join(tmpdir(), "nexus-crm-import-"));
+  const sourcePath = join(workDir, `upload.${extension}`);
+  try {
+    await writeFile(sourcePath, buffer);
+    const script = resolve(process.cwd(), "scripts", "parse-contact-spreadsheet.py");
+    const { stdout } = await execFile(process.env.NEXUS_PYTHON || "python", [script, sourcePath], { maxBuffer: 3 * 1024 * 1024, windowsHide: true });
+    const parsed = JSON.parse(stdout) as { sheetName?: string; rows?: Record<string, unknown>[] };
+    if (!Array.isArray(parsed.rows)) throw new Error("The spreadsheet could not be read.");
+    return { sheetName: parsed.sheetName || "First worksheet", rows: parsed.rows };
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+export async function parseImportedContacts(buffer: Buffer, fileName: string) {
+  const { sheetName, rows } = await spreadsheetRows(buffer, fileName);
+  if (!rows.length) throw new Error("No contact rows were found in the first worksheet.");
+
+  const contacts: ImportedContact[] = [];
+  let skipped = 0;
+  for (const row of rows.slice(0, importedContactLimit)) {
+    const email = fieldFromRow(row, "email").toLowerCase();
+    const name = fieldFromRow(row, "name") || (email ? email.split("@")[0].replace(/[._-]+/g, " ") : "");
+    if (!name && !email) { skipped += 1; continue; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped += 1; continue; }
+    contacts.push({
+      id: randomUUID(),
+      name,
+      email,
+      company: fieldFromRow(row, "company") || "—",
+      status: fieldFromRow(row, "status") || "New lead",
+      source: fieldFromRow(row, "source") || "Spreadsheet import",
+    });
+  }
+  if (!contacts.length) throw new Error("No valid contacts were found. Include a Name or Email column, and use valid email addresses when provided.");
+  return { sheetName, contacts, skipped, capped: rows.length > importedContactLimit };
+}
 
 function makePlan(request: string): PlannedAction[] {
   const text = request.toLowerCase();
@@ -54,6 +134,11 @@ export function createIntegrationApi() {
   const router = Router();
   const analystRoot = resolve(process.cwd(), "..", ".research-tools", "adradar");
   const analystEntry = resolve(analystRoot, "dist", "index.js");
+  // On managed Windows devices the Playwright-downloaded Chromium binary can
+  // be denied network access, while the installed Chrome browser is allowed.
+  const configuredChrome = process.env.ADRADAR_CHROME_EXECUTABLE?.trim();
+  const defaultWindowsChrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  const browserExecutable = configuredChrome || (process.platform === "win32" && existsSync(defaultWindowsChrome) ? defaultWindowsChrome : undefined);
   router.get("/status", async (_req, res) => res.json({
     crm: { url: "http://127.0.0.1:8000", online: await crmOnline() },
     analyst: { ready: existsSync(analystEntry), mode: "Meta Ad Library · dry run" },
@@ -64,6 +149,28 @@ export function createIntegrationApi() {
     const result = await runBusinessAgent(input);
     res.json(result);
   });
+  router.post("/crm/import", express.raw({ type: "application/octet-stream", limit: "5mb" }), async (req, res) => {
+    const fileName = String(req.header("x-nexus-file-name") || "contacts.csv").replace(/[\\/]/g, "_");
+    if (!Buffer.isBuffer(req.body) || !req.body.length) {
+      res.status(400).json({ error: "Choose a non-empty CSV or XLSX file." });
+      return;
+    }
+    try {
+      const parsed = await parseImportedContacts(req.body, fileName);
+      // The server only normalizes this request. The browser stores the returned
+      // contact list locally; neither the original file nor contacts are persisted here.
+      res.set("Cache-Control", "no-store").json({
+        fileName,
+        sheetName: parsed.sheetName,
+        importedAt: new Date().toISOString(),
+        contacts: parsed.contacts,
+        skipped: parsed.skipped,
+        capped: parsed.capped,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "The spreadsheet could not be imported." });
+    }
+  });
   router.get("/analyst/scan-stream", async (req, res) => {
     const input = z.object({ pageId: z.string().trim().regex(/^\d{5,30}$/, "Enter a numeric Meta page ID."), country: z.string().regex(/^(?:[A-Z]{2}|ALL)$/).default("ALL"), ourPositioning: z.string().trim().max(1500).default("") }).parse(req.query);
     if (!existsSync(analystEntry)) { res.status(503).json({ error: "AdRadar has not been built yet. Run npm run build in .research-tools/adradar." }); return; }
@@ -72,7 +179,11 @@ export function createIntegrationApi() {
     const send = (event: string, payload: unknown) => { if (!res.writableEnded && !res.destroyed) res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`); };
     const snapshot = resolve(analystRoot, "data", `nexora-${input.pageId}-${input.country}.json`);
     send("progress", { stage: "Starting", detail: "Opening Meta Ad Library" });
-    const child = spawn(process.execPath, [analystEntry, "--page-id", input.pageId, "--country", input.country, "--data", snapshot, "--dry-run", "--max-scrolls", "0", "--max-ads", "20", "--timeout", "60000"], { cwd: analystRoot, windowsHide: true });
+    const child = spawn(process.execPath, [analystEntry, "--page-id", input.pageId, "--country", input.country, "--data", snapshot, "--dry-run", "--max-scrolls", "0", "--max-ads", "20", "--timeout", "60000"], {
+      cwd: analystRoot,
+      windowsHide: true,
+      env: { ...process.env, ...(browserExecutable ? { ADRADAR_CHROME_EXECUTABLE: browserExecutable } : {}) },
+    });
     let output = "", remainder = "";
     const append = (chunk: Buffer) => {
       const value = chunk.toString(); output = `${output}${value}`.slice(-40_000); remainder += value;

@@ -40,6 +40,12 @@ const nexusStarterTemplates = [
   ["event-summit", "Event & Summit", "Events", "Agenda and sign-up"],
   ["hospitality-stays", "Stays & Retreats", "Hospitality", "Rooms and table requests"],
   ["community-hub", "Community Hub", "Community", "Resources and gatherings"],
+  ["nonprofit-impact", "Nonprofit & Impact", "Nonprofit", "People-first impact story"],
+  ["real-estate-studio", "Property Studio", "Real estate", "Property and place"],
+  ["health-clinic", "Health Clinic", "Health & care", "Care and appointments"],
+  ["law-practice", "Law Practice", "Professional services", "Clear client counsel"],
+  ["creative-portfolio", "Creative Portfolio", "Portfolio", "Projects and editorial work"],
+  ["home-services", "Home Services", "Local services", "Trustworthy service enquiries"],
 ];
 function starterLibrary() {
   return `<section class="ds-section"><div class="ds-section-head"><div><h2>Find your starting point</h2><p>Choose a foundation, then shape it around your brand in the builder.</p></div><a class="link" href="/builder">Explore all templates</a></div><div class="ds-template-grid">${nexusStarterTemplates.map(([id,name,category,description])=>`<article class="ds-template-tile"><div class="ds-template-preview" aria-hidden="true"><div><span></span><span></span></div><strong>${esc(name)}</strong><i></i><i></i></div><div><span class="ds-template-category">${esc(category)}</span><h3>${esc(name)}</h3><p>${esc(description)}</p><a class="btn" href="/builder?template=${encodeURIComponent(id)}">Use template</a></div></article>`).join("")}</div></section>`;

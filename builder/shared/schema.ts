@@ -472,7 +472,8 @@ export const WebsiteDocumentSchema = z
       .enum([
         "saas-modern", "fintech-premium", "agency-clean", "restaurant-cafe",
         "beauty-wellness", "commerce-editorial", "coach-course", "event-summit",
-        "hospitality-stays", "community-hub",
+        "hospitality-stays", "community-hub", "nonprofit-impact", "real-estate-studio",
+        "health-clinic", "law-practice", "creative-portfolio", "home-services",
       ])
       .nullable(),
     data: PuckDataSchema,
